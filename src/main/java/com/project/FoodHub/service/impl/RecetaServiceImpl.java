@@ -13,6 +13,7 @@ import com.project.FoodHub.repository.CreadorRepository;
 import com.project.FoodHub.repository.IngredienteRepository;
 import com.project.FoodHub.repository.InstruccionRepository;
 import com.project.FoodHub.repository.RecetaRepository;
+import com.project.FoodHub.service.ICreadorService;
 import com.project.FoodHub.service.IRecetaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -32,6 +33,7 @@ public class RecetaServiceImpl implements IRecetaService {
     private final CreadorRepository creadorRepository;
     private final IngredienteRepository ingredienteRepository;
     private final InstruccionRepository instruccionRepository;
+    private final ICreadorService creadorService;
 
     @Override
     @Transactional
@@ -114,7 +116,8 @@ public class RecetaServiceImpl implements IRecetaService {
     private Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);
-        return ((Creador) authentication.getPrincipal()).getIdCreador();
+        String email = authentication.getName();
+        return creadorService.obtenerCreadorPorEmail(email).getIdCreador();
     }
 
     private void validarAutenticacion(Authentication authentication) {

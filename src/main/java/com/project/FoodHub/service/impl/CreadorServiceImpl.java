@@ -7,6 +7,7 @@ import com.project.FoodHub.mapper.CreadorMapper;
 import com.project.FoodHub.repository.CreadorRepository;
 import com.project.FoodHub.repository.RecetaRepository;
 import com.project.FoodHub.service.ICreadorService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,15 +63,16 @@ public class CreadorServiceImpl implements ICreadorService {
     }
 
     @Override
+    @Transactional
     public Creador guardarCreador(Creador creador) {
-        creadorRepository.save(creador);
-        return creador;
+        return creadorRepository.save(creador);
     }
 
     private Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);
-        return ((Creador) authentication.getPrincipal()).getIdCreador();
+        String email = authentication.getName();
+        return obtenerCreadorPorEmail(email).getIdCreador();
     }
 
     private void validarAutenticacion(Authentication authentication) {

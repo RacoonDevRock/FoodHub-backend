@@ -22,14 +22,15 @@ public class CreadorController {
     }
 
     @GetMapping("/cantidadRecetas")
-    public ResponseEntity<Integer> obtenerCantidadRecetasCreadas() {
+    public ResponseEntity<?> obtenerCantidadRecetasCreadas() {
         Integer cantidadRecetas = creadorService.obtenerCantidadDeRecetasCreadas();
 
         return ResponseEntity.ok(cantidadRecetas);
     }
 
     @GetMapping("/perfil")
-    public CreadorDTO verPerfil() {
-        return creadorService.verPerfil();
+    public ResponseEntity<CreadorDTO> verPerfil() {
+        CreadorDTO response = creadorService.verPerfil();
+        return ResponseEntity.ok(response);
     }
 }

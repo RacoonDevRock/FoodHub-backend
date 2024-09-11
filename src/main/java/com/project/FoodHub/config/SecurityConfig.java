@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,10 +36,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .httpBasic(Customizer.withDefaults())
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(publicEndpoints()).permitAll()
-                        .anyRequest().authenticated())
-                .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .requestMatchers(privateEndpoints()).authenticated()
+                        .anyRequest().denyAll())
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class)
                 .build();
     }
@@ -47,10 +51,17 @@ public class SecurityConfig {
         return new OrRequestMatcher(
                 new AntPathRequestMatcher("/auth/**"),
                 new AntPathRequestMatcher("/explorar/recetas/**"),
-                new AntPathRequestMatcher("/explorar/{idReceta}/**"),
-                new AntPathRequestMatcher("/v3/api-docs/**"),
-                new AntPathRequestMatcher("/swagger-ui/**"),
-                new AntPathRequestMatcher("/swagger-ui.html")
+                new AntPathRequestMatcher("/explorar/{idReceta}")
+//                new AntPathRequestMatcher("/v3/api-docs/**"),
+//                new AntPathRequestMatcher("/swagger-ui/**"),
+//                new AntPathRequestMatcher("/swagger-ui.html")
+        );
+    }
+
+    private RequestMatcher privateEndpoints() {
+        return new OrRequestMatcher(
+                new AntPathRequestMatcher("/creador/**"),
+                new AntPathRequestMatcher("/explorar/crear")
         );
     }
 

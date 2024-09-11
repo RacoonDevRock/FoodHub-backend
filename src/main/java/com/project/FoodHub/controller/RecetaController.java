@@ -26,10 +26,9 @@ public class RecetaController {
     }
 
     @GetMapping("/recetas")
-    public ResponseEntity<List<RecetasCategoriaResponse>> mostrarRecetasPorCategoria(@RequestParam("categoria") String categoriaStr) {
+    public List<RecetasCategoriaResponse> mostrarRecetasPorCategoria(@RequestParam("categoria") String categoriaStr) {
         Categoria categoria = Categoria.fromString(categoriaStr);
-        List<RecetasCategoriaResponse> listaRecetas = recetaService.mostrarRecetasPorCategoria(categoria);
-        return ResponseEntity.ok(listaRecetas);
+        return recetaService.mostrarRecetasPorCategoria(categoria);
     }
 
     @GetMapping("/{idReceta}")
