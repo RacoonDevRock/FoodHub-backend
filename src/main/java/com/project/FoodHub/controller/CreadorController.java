@@ -16,21 +16,21 @@ public class CreadorController {
 
     private final ICreadorService creadorService;
 
-    @GetMapping("/todos")
-    public List<Creador> mostrarCreador() {
-        return creadorService.mostrarCreadores();
+    @GetMapping
+    public ResponseEntity<List<Creador>> mostrarCreadores() {
+        List<Creador> creadores = creadorService.mostrarCreadores();
+        return ResponseEntity.ok(creadores);
     }
 
     @GetMapping("/cantidadRecetas")
-    public ResponseEntity<?> obtenerCantidadRecetasCreadas() {
+    public ResponseEntity<Integer> obtenerCantidadRecetasCreadas() {
         Integer cantidadRecetas = creadorService.obtenerCantidadDeRecetasCreadas();
-
         return ResponseEntity.ok(cantidadRecetas);
     }
 
     @GetMapping("/perfil")
     public ResponseEntity<CreadorDTO> verPerfil() {
-        CreadorDTO response = creadorService.verPerfil();
-        return ResponseEntity.ok(response);
+        CreadorDTO perfil = creadorService.verPerfil();
+        return ResponseEntity.ok(perfil);
     }
 }

@@ -91,6 +91,8 @@ public class IUserDetailService implements UserDetailsService {
             throw new CorreoConfirmadoException("Código de colegiado ya registrado");
         }
 
+        colegiadoService.confirmarCuenta(request.getCodigoColegiatura());
+
         Creador creador = new Creador(
                 request.getNombre(),
                 request.getApellidoPaterno(),
