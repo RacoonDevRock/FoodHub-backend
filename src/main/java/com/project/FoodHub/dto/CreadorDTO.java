@@ -13,7 +13,6 @@ public class CreadorDTO {
     private String apellidoPaterno;
     private String apellidoMaterno;
     private String correoElectronico;
-    private String contrasenia;
     private String codigoColegiatura;
-
+    private String fotoPerfil;
 }

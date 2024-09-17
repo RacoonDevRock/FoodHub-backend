@@ -20,10 +20,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -35,13 +41,17 @@ public class RecetaServiceImpl implements IRecetaService {
     private final InstruccionRepository instruccionRepository;
     private final ICreadorService creadorService;
 
+    public static final String RUTA_IMAGEN_RECETAS = "imagen_recetas/";
+
     @Override
     @Transactional
-    public ConfirmacionResponse crearReceta(RecetaRequest recetaRequest) {
+    public ConfirmacionResponse crearReceta(RecetaRequest recetaRequest, MultipartFile imagen) throws IOException {
         Long idCreador = obtenerIdCreadorAutenticado();
 
         Creador creador = creadorRepository.findById(idCreador)
                 .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
+
+        String nombreImagen = guardarImagen(imagen);
 
         Receta receta = Receta.builder()
                 .titulo(recetaRequest.getTitulo())
@@ -49,7 +59,7 @@ public class RecetaServiceImpl implements IRecetaService {
                 .tiempoCoccion(recetaRequest.getTiempoCoccion())
                 .porciones(recetaRequest.getPorciones())
                 .calorias(recetaRequest.getCalorias())
-                .imagen(recetaRequest.getImagen())
+                .imagen(nombreImagen)
                 .categoria(recetaRequest.getCategoria())
                 .ingredientes(new ArrayList<>())
                 .instrucciones(new ArrayList<>())
@@ -67,6 +77,24 @@ public class RecetaServiceImpl implements IRecetaService {
         }
 
         return new ConfirmacionResponse("Receta creada de forma exitosa", "success");
+    }
+
+    private String guardarImagen(MultipartFile imagen) throws IOException {
+        if (imagen.isEmpty()) throw new IOException("El archivo de imagen está vacío");
+
+        String tipoArchivo = imagen.getContentType();
+        if (!tipoArchivo.equals("image/jpeg") && !tipoArchivo.equals("image/png"))
+            throw new IOException("El archivo no es una imagen válida");
+
+        String nombreArchivo = UUID.randomUUID().toString() + "_" + imagen.getOriginalFilename();
+
+        Path rutaCompleta = Paths.get(RUTA_IMAGEN_RECETAS + nombreArchivo);
+
+        Files.createDirectories(rutaCompleta.getParent());
+
+        Files.write(rutaCompleta, imagen.getBytes());
+
+        return nombreArchivo;
     }
 
     @Override

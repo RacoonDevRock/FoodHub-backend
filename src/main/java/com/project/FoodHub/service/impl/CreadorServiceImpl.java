@@ -3,7 +3,6 @@ package com.project.FoodHub.service.impl;
 import com.project.FoodHub.dto.CreadorDTO;
 import com.project.FoodHub.entity.Creador;
 import com.project.FoodHub.exception.*;
-import com.project.FoodHub.mapper.CreadorMapper;
 import com.project.FoodHub.repository.CreadorRepository;
 import com.project.FoodHub.repository.RecetaRepository;
 import com.project.FoodHub.service.ICreadorService;
@@ -13,9 +12,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -24,8 +29,8 @@ public class CreadorServiceImpl implements ICreadorService {
 
     private final CreadorRepository creadorRepository;
     private final RecetaRepository recetaRepository;
-    private final CreadorMapper creadorMapper;
 
+    public static final String RUTA_IMAGEN_PERFIL = "foto_perfil/";
 
     @Override
     public List<Creador> mostrarCreadores() {
@@ -49,7 +54,12 @@ public class CreadorServiceImpl implements ICreadorService {
         Creador creador = creadorRepository.findById(idCreador)
                 .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
 
-        return creadorMapper.mapToDTO(creador);
+        return new CreadorDTO(creador.getNombre(),
+                creador.getApellidoPaterno(),
+                creador.getApellidoMaterno(),
+                creador.getCorreoElectronico(),
+                creador.getCodigoColegiatura(),
+                creador.getFotoPerfil());
     }
 
     @Override
@@ -70,6 +80,28 @@ public class CreadorServiceImpl implements ICreadorService {
         return creadorRepository.save(creador);
     }
 
+    @Override
+    @Transactional
+    public void actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException {
+        if (fotoPerfil.isEmpty()) throw new IOException("El archivo de imagen está vacío");
+
+        String tipoArchivo = fotoPerfil.getContentType();
+        if (!tipoArchivo.equals("image/jpeg") && !tipoArchivo.equals("image/png"))
+            throw new IOException("El archivo no es una foto válida");
+
+        String nombreArchivo = UUID.randomUUID().toString() + "_" + fotoPerfil.getOriginalFilename();
+        Path rutaCompleta = Paths.get(RUTA_IMAGEN_PERFIL + nombreArchivo);
+
+        Files.createDirectories(rutaCompleta.getParent());
+        Files.write(rutaCompleta, fotoPerfil.getBytes());
+
+        Long idCreador = obtenerIdCreadorAutenticado();
+        Creador creador = creadorRepository.findById(idCreador)
+                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado"));
+
+        creador.setFotoPerfil(nombreArchivo);
+        creadorRepository.save(creador); // Guarda el cambio en la base de datos
+    }
     private Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);

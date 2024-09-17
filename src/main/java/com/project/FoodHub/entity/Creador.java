@@ -56,7 +56,7 @@ public class Creador {
     @Enumerated(EnumType.STRING)
     private Rol role;
 
-    @Column(name = "foto_perfil", columnDefinition = "LONGTEXT")
+    @Column(name = "foto_perfil")
     private String fotoPerfil;
 
     public Creador(String nombre,

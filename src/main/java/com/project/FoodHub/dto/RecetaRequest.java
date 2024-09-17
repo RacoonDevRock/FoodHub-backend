@@ -39,9 +39,6 @@ public class RecetaRequest {
     @Positive(message = "Las calorías deben ser un número positivo")
     private Double calorias;
 
-    @NotBlank(message = "La URL de la imagen no puede estar en blanco")
-    private String imagen;
-
     @NotNull(message = "La categoría no puede ser nula")
     private Categoria categoria;
 
