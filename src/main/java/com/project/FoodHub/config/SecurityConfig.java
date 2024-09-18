@@ -51,7 +51,8 @@ public class SecurityConfig {
         return new OrRequestMatcher(
                 new AntPathRequestMatcher("/auth/**"),
                 new AntPathRequestMatcher("/explorar/recetas/**"),
-                new AntPathRequestMatcher("/explorar/{idReceta}")
+                new AntPathRequestMatcher("/explorar/{idReceta}"),
+                new AntPathRequestMatcher("/imagen_recetas/**")
 //                new AntPathRequestMatcher("/v3/api-docs/**"),
 //                new AntPathRequestMatcher("/swagger-ui/**"),
 //                new AntPathRequestMatcher("/swagger-ui.html")

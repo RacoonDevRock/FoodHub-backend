@@ -30,7 +30,7 @@ public class CreadorServiceImpl implements ICreadorService {
     private final CreadorRepository creadorRepository;
     private final RecetaRepository recetaRepository;
 
-    public static final String RUTA_IMAGEN_PERFIL = "foto_perfil/";
+    public static final String RUTA_IMAGENES = "imagenes/";
 
     @Override
     public List<Creador> mostrarCreadores() {
@@ -90,7 +90,7 @@ public class CreadorServiceImpl implements ICreadorService {
             throw new IOException("El archivo no es una foto válida");
 
         String nombreArchivo = UUID.randomUUID().toString() + "_" + fotoPerfil.getOriginalFilename();
-        Path rutaCompleta = Paths.get(RUTA_IMAGEN_PERFIL + nombreArchivo);
+        Path rutaCompleta = Paths.get(RUTA_IMAGENES + nombreArchivo);
 
         Files.createDirectories(rutaCompleta.getParent());
         Files.write(rutaCompleta, fotoPerfil.getBytes());
