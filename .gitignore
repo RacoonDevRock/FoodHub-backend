@@ -33,5 +33,4 @@ build/
 .vscode/
 
 ### Media Directories ###
-/foto_perfil
-/imagen_recetas
+/imagenes

@@ -52,7 +52,7 @@ public class SecurityConfig {
                 new AntPathRequestMatcher("/auth/**"),
                 new AntPathRequestMatcher("/explorar/recetas/**"),
                 new AntPathRequestMatcher("/explorar/{idReceta}"),
-                new AntPathRequestMatcher("/imagen_recetas/**")
+                new AntPathRequestMatcher("/imagenes/**")
 //                new AntPathRequestMatcher("/v3/api-docs/**"),
 //                new AntPathRequestMatcher("/swagger-ui/**"),
 //                new AntPathRequestMatcher("/swagger-ui.html")

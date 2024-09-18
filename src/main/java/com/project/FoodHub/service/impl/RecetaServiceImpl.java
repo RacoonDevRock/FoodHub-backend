@@ -41,7 +41,7 @@ public class RecetaServiceImpl implements IRecetaService {
     private final InstruccionRepository instruccionRepository;
     private final ICreadorService creadorService;
 
-    public static final String RUTA_IMAGEN_RECETAS = "imagen_recetas/";
+    public static final String RUTA_IMAGENES = "imagenes/";
 
     @Override
     @Transactional
@@ -88,7 +88,7 @@ public class RecetaServiceImpl implements IRecetaService {
 
         String nombreArchivo = UUID.randomUUID().toString() + "_" + imagen.getOriginalFilename();
 
-        Path rutaCompleta = Paths.get(RUTA_IMAGEN_RECETAS + nombreArchivo);
+        Path rutaCompleta = Paths.get(RUTA_IMAGENES + nombreArchivo);
 
         Files.createDirectories(rutaCompleta.getParent());
 
