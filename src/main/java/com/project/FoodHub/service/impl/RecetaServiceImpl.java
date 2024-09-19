@@ -1,6 +1,7 @@
 package com.project.FoodHub.service.impl;
 
 import com.project.FoodHub.dto.ConfirmacionResponse;
+import com.project.FoodHub.dto.RecetaDTOResponse;
 import com.project.FoodHub.dto.RecetaRequest;
 import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.entity.*;
@@ -129,9 +130,25 @@ public class RecetaServiceImpl implements IRecetaService {
     }
 
     @Override
-    public Receta verReceta(Long idReceta) {
-        return recetaRepository.findById(idReceta)
+    public RecetaDTOResponse verReceta(Long idReceta) {
+        Receta receta = recetaRepository.findById(idReceta)
                 .orElseThrow(() -> new RecetaNoEncontradaException("Receta no encontrada"));
+
+        String nombreCompleto = receta.getCreador().getNombre() + " " + receta.getCreador().getApellidoPaterno() + " " + receta.getCreador().getApellidoMaterno();
+
+        return new RecetaDTOResponse(
+                receta.getTitulo(),
+                receta.getDescripcion(),
+                receta.getTiempoCoccion(),
+                receta.getPorciones(),
+                receta.getCalorias(),
+                receta.getImagen(),
+                receta.getCategoria(),
+                receta.getIngredientes(),
+                receta.getInstrucciones(),
+                receta.getCreador().getFotoPerfil(),
+                nombreCompleto
+        );
     }
 
     private void agregarInstruccion(Receta receta, Instruccion instruccion) {

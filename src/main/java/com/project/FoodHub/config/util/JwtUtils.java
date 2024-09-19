@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,9 @@ public class JwtUtils {
     @Value("${security.jwt.user.generator}")
     private String userGenerator;
 
+    @Value("${security.jwt.expiration}")
+    private long expirationTime;
+
     public String createToken(Authentication authentication) {
         Algorithm algorithm = Algorithm.HMAC256(privateKey);
 
@@ -30,7 +34,7 @@ public class JwtUtils {
                 .withSubject(authentication.getPrincipal().toString())
                 .withClaim("role", authentication.getAuthorities().iterator().next().getAuthority())
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 1800000))
+                .withExpiresAt(new Date(System.currentTimeMillis() + expirationTime))
                 .withJWTId(UUID.randomUUID().toString())
                 .withNotBefore(new Date(System.currentTimeMillis()))
                 .sign(algorithm);
@@ -45,6 +49,8 @@ public class JwtUtils {
                     .build();
 
             return verifier.verify(token);
+        } catch (TokenExpiredException expiredException) {
+            throw new TokenExpiredException("Token has expired", expiredException.getExpiredOn());
         } catch (JWTVerificationException exception) {
             throw new JWTVerificationException("Token invalid, not Authorized...");
         }

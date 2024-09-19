@@ -1,6 +1,7 @@
 package com.project.FoodHub.service;
 
 import com.project.FoodHub.dto.ConfirmacionResponse;
+import com.project.FoodHub.dto.RecetaDTOResponse;
 import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.dto.RecetaRequest;
 import com.project.FoodHub.entity.*;
@@ -18,6 +19,6 @@ public interface IRecetaService {
 
     List<RecetasCategoriaResponse> mostrarRecetasPorCategoria(Categoria categoria);
 
-    Receta verReceta(Long idReceta);
+    RecetaDTOResponse verReceta(Long idReceta);
 
 }

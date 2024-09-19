@@ -1,6 +1,7 @@
 package com.project.FoodHub.service.impl;
 
 import com.project.FoodHub.dto.CreadorDTO;
+import com.project.FoodHub.dto.MessageResponse;
 import com.project.FoodHub.entity.Creador;
 import com.project.FoodHub.exception.*;
 import com.project.FoodHub.repository.CreadorRepository;
@@ -82,7 +83,7 @@ public class CreadorServiceImpl implements ICreadorService {
 
     @Override
     @Transactional
-    public void actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException {
+    public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException {
         if (fotoPerfil.isEmpty()) throw new IOException("El archivo de imagen está vacío");
 
         String tipoArchivo = fotoPerfil.getContentType();
@@ -101,7 +102,10 @@ public class CreadorServiceImpl implements ICreadorService {
 
         creador.setFotoPerfil(nombreArchivo);
         creadorRepository.save(creador); // Guarda el cambio en la base de datos
+
+        return new MessageResponse("Foto actualizada correctamente.");
     }
+
     private Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);

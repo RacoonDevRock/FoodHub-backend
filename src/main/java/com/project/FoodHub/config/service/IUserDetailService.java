@@ -145,9 +145,13 @@ public class IUserDetailService implements UserDetailsService {
 
         Creador creador = creadorService.obtenerCreadorPorEmail(username);
 
+        if (creador == null) {
+            throw new CreadorNoEncontradoException("El usuario no existe.");
+        }
+
         creador.setEnabled(true);
         creadorService.guardarCreador(creador);
 
-        return new MessageResponse("Account successfully confirmed for " + username);
+        return new MessageResponse("Cuenta confirmada exitosamente para " + username);
     }
 }

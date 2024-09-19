@@ -1,6 +1,7 @@
 package com.project.FoodHub.controller;
 
 import com.project.FoodHub.dto.ConfirmacionResponse;
+import com.project.FoodHub.dto.RecetaDTOResponse;
 import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.dto.RecetaRequest;
 import com.project.FoodHub.enumeration.Categoria;
@@ -37,8 +38,8 @@ public class RecetaController {
     }
 
     @GetMapping("/{idReceta}")
-    public ResponseEntity<Receta> verReceta(@PathVariable("idReceta") Long idReceta) {
-        Receta receta = recetaService.verReceta(idReceta);
+    public ResponseEntity<RecetaDTOResponse> verReceta(@PathVariable("idReceta") Long idReceta) {
+        RecetaDTOResponse receta = recetaService.verReceta(idReceta);
         return ResponseEntity.ok(receta);
     }
 

@@ -1,6 +1,7 @@
 package com.project.FoodHub.service;
 
 import com.project.FoodHub.dto.CreadorDTO;
+import com.project.FoodHub.dto.MessageResponse;
 import com.project.FoodHub.entity.Creador;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,5 +22,5 @@ public interface ICreadorService {
 
     Creador guardarCreador(Creador creador);
 
-    void actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException;
+    MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException;
 }

@@ -1,6 +1,7 @@
 package com.project.FoodHub.controller;
 
 import com.project.FoodHub.dto.CreadorDTO;
+import com.project.FoodHub.dto.MessageResponse;
 import com.project.FoodHub.entity.Creador;
 import com.project.FoodHub.service.ICreadorService;
 import lombok.RequiredArgsConstructor;
@@ -38,12 +39,8 @@ public class CreadorController {
     }
 
     @PostMapping("/actualizarFotoPerfil")
-    public ResponseEntity<String> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) {
-        try {
-            creadorService.actualizarFotoPerfil(fotoPerfil);
-            return ResponseEntity.ok("Foto de perfil actualizada exitosamente.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la foto de perfil.");
-        }
+    public ResponseEntity<MessageResponse> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) throws IOException {
+        MessageResponse response = creadorService.actualizarFotoPerfil(fotoPerfil);
+        return ResponseEntity.ok(response);
     }
 }
