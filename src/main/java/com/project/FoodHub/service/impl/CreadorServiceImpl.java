@@ -70,6 +70,11 @@ public class CreadorServiceImpl implements ICreadorService {
     }
 
     @Override
+    public Optional<Creador> verificarCorreoRegistrado(String email) {
+        return creadorRepository.findCreadorByCorreoElectronico(email);
+    }
+
+    @Override
     public Creador obtenerCreadorPorIdentificador(String identificador) {
         return creadorRepository.findByCodigoColegiatura(identificador)
                 .orElseThrow(() -> new CreadorNoEncontradoException("Usuario con identificador: " + identificador + " no encontrado"));
@@ -83,7 +88,7 @@ public class CreadorServiceImpl implements ICreadorService {
 
     @Override
     @Transactional
-    public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException {
+    public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException, FotoPerfilException {
         if (fotoPerfil.isEmpty()) throw new IOException("El archivo de imagen está vacío");
 
         String tipoArchivo = fotoPerfil.getContentType();
@@ -93,8 +98,12 @@ public class CreadorServiceImpl implements ICreadorService {
         String nombreArchivo = UUID.randomUUID().toString() + "_" + fotoPerfil.getOriginalFilename();
         Path rutaCompleta = Paths.get(RUTA_IMAGENES + nombreArchivo);
 
-        Files.createDirectories(rutaCompleta.getParent());
-        Files.write(rutaCompleta, fotoPerfil.getBytes());
+        try {
+            Files.createDirectory(rutaCompleta.getParent());
+            Files.write(rutaCompleta, fotoPerfil.getBytes());
+        } catch (IOException e) {
+            throw new FotoPerfilException("Error al guardar la foto", e);
+        }
 
         Long idCreador = obtenerIdCreadorAutenticado();
         Creador creador = creadorRepository.findById(idCreador)

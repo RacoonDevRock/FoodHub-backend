@@ -6,6 +6,8 @@ import com.project.FoodHub.config.service.IUserDetailService;
 import com.project.FoodHub.dto.*;
 import com.project.FoodHub.exception.CreadorNoEncontradoException;
 import com.project.FoodHub.exception.IncorrectCredentials;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;

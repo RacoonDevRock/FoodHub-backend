@@ -86,6 +86,12 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(HttpStatus.CONFLICT, exception.getMessage());
     }
 
+    @ExceptionHandler(CodigoConfirmadoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorMessage> handleCodigoConfirmadoException(CodigoConfirmadoException exception) {
+        return buildResponseEntity(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
     @ExceptionHandler(TokenExpiradoException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorMessage> handleTokenExpiradoException(TokenExpiradoException exception) {

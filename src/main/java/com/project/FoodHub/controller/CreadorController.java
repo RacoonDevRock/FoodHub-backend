@@ -3,6 +3,7 @@ package com.project.FoodHub.controller;
 import com.project.FoodHub.dto.CreadorDTO;
 import com.project.FoodHub.dto.MessageResponse;
 import com.project.FoodHub.entity.Creador;
+import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.service.ICreadorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,7 +40,7 @@ public class CreadorController {
     }
 
     @PostMapping("/actualizarFotoPerfil")
-    public ResponseEntity<MessageResponse> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) throws IOException {
+    public ResponseEntity<MessageResponse> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) throws IOException, FotoPerfilException {
         MessageResponse response = creadorService.actualizarFotoPerfil(fotoPerfil);
         return ResponseEntity.ok(response);
     }

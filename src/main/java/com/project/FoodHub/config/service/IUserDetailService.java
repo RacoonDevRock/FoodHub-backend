@@ -87,8 +87,12 @@ public class IUserDetailService implements UserDetailsService {
             throw new ColegiadoNoValidoException("No se pudo validar el colegiado. Verifica los datos proporcionados.");
         }
 
+        if (creadorService.verificarCorreoRegistrado(request.getCorreoElectronico()).isPresent()) {
+            throw new CorreoConfirmadoException("El correo electrónico ya está registrado.");
+        }
+
         if (!colegiadoService.isCuentaConfirmada(request.getCodigoColegiatura())) {
-            throw new CorreoConfirmadoException("Código de colegiado ya registrado");
+            throw new CodigoConfirmadoException("Código de colegiado ya registrado");
         }
 
         colegiadoService.confirmarCuenta(request.getCodigoColegiatura());
@@ -122,6 +126,7 @@ public class IUserDetailService implements UserDetailsService {
                 new UsernamePasswordAuthenticationToken(creadorCreated.getCorreoElectronico(),
                         creadorCreated.getContrasenia(),
                         AuthorityUtils.createAuthorityList(creadorCreated.getRole().name()));
+
         String accessToken = jwtUtils.createToken(authentication);
 
         sendSimpleMessage(
@@ -140,14 +145,12 @@ public class IUserDetailService implements UserDetailsService {
     }
 
     public MessageResponse confirmAccount(String token) {
+
         DecodedJWT decodedJWT = jwtUtils.validateToken(token);
         String username = jwtUtils.extractUsername(decodedJWT);
 
         Creador creador = creadorService.obtenerCreadorPorEmail(username);
-
-        if (creador == null) {
-            throw new CreadorNoEncontradoException("El usuario no existe.");
-        }
+        if (creador == null) throw new CreadorNoEncontradoException("El usuario no existe.");
 
         creador.setEnabled(true);
         creadorService.guardarCreador(creador);
