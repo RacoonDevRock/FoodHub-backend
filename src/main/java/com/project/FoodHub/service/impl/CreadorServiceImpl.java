@@ -66,7 +66,7 @@ public class CreadorServiceImpl implements ICreadorService {
     @Override
     public Creador obtenerCreadorPorEmail(String email) {
         return creadorRepository.findCreadorByCorreoElectronico(email)
-                .orElseThrow(() -> new CreadorNoEncontradoException("Usuario con email: " + email + " no encontrado"));
+                .orElseThrow(() -> new CreadorNoEncontradoException("Usuario no registrado"));
     }
 
     @Override
@@ -92,7 +92,7 @@ public class CreadorServiceImpl implements ICreadorService {
         if (fotoPerfil.isEmpty()) throw new IOException("El archivo de imagen está vacío");
 
         String tipoArchivo = fotoPerfil.getContentType();
-        if (!tipoArchivo.equals("image/jpeg") && !tipoArchivo.equals("image/png"))
+        if (!tipoArchivo.equals("image/jpeg") && !tipoArchivo.equals("image/png") && !tipoArchivo.equals("image/jpg"))
             throw new IOException("El archivo no es una foto válida");
 
         String nombreArchivo = UUID.randomUUID().toString() + "_" + fotoPerfil.getOriginalFilename();

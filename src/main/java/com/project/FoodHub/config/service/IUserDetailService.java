@@ -64,7 +64,7 @@ public class IUserDetailService implements UserDetailsService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         if (!creador.isEnabled()) {
-            throw new CuentaNoConfirmadaException("Cuenta no confirmada");
+            throw new CuentaNoConfirmadaException("Activa tu cuenta antes de iniciar sesion.");
         }
 
         String accessToken = jwtUtils.createToken(authentication);
@@ -75,7 +75,7 @@ public class IUserDetailService implements UserDetailsService {
         UserDetails userDetails = loadUserByUsername(email);
 
         if (userDetails == null || !passwordEncoder.matches(password, userDetails.getPassword())) {
-            throw new IncorrectCredentials("Invalid email or password");
+            throw new IncorrectCredentials("Las credenciales son incorrectas. Intentalo de nuevo.");
         }
 
         return new UsernamePasswordAuthenticationToken(email, userDetails.getPassword(), userDetails.getAuthorities());
@@ -84,7 +84,7 @@ public class IUserDetailService implements UserDetailsService {
     @Transactional
     public ConfirmacionResponse registrar(CreadorRequest request) {
         if (!colegiadoService.validarColegiado(request.getNombre(), request.getApellidoPaterno(), request.getApellidoMaterno(), request.getCodigoColegiatura())) {
-            throw new ColegiadoNoValidoException("No se pudo validar el colegiado. Verifica los datos proporcionados.");
+            throw new ColegiadoNoValidoException("No se pudo validar el colegiado, los datos no coinciden.");
         }
 
         if (creadorService.verificarCorreoRegistrado(request.getCorreoElectronico()).isPresent()) {
