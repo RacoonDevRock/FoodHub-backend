@@ -24,7 +24,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build the Docker image  # Construir la imagen de Docker desde la carpeta correcta
-      run: docker build FoodHub-backend/ --file FoodHub-backend/Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/foodhub-backend:$(date +%s)
+      run: docker build ./ --file ./Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/foodhub-backend:$(date +%s)
 
     - name: Push Docker image  # Subir la imagen a Docker Hub
       run: docker push ${{ secrets.DOCKER_USERNAME }}/foodhub-backend:$(date +%s)
