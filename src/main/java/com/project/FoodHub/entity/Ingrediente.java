@@ -21,7 +21,7 @@ public class Ingrediente {
     @Column(name = "ingrediete", nullable = false)
     private String ingrediente;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_receta")
     @JsonIgnore
     private Receta receta;

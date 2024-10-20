@@ -7,6 +7,7 @@ import com.project.FoodHub.exception.*;
 import com.project.FoodHub.repository.CreadorRepository;
 import com.project.FoodHub.repository.RecetaRepository;
 import com.project.FoodHub.service.ICreadorService;
+import com.project.FoodHub.service.UploadImage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -16,12 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -30,13 +28,7 @@ public class CreadorServiceImpl implements ICreadorService {
 
     private final CreadorRepository creadorRepository;
     private final RecetaRepository recetaRepository;
-
-    public static final String RUTA_IMAGENES = "imagenes/";
-
-    @Override
-    public List<Creador> mostrarCreadores() {
-        return creadorRepository.findAll();
-    }
+    private final UploadImage uploadImage;
 
     @Override
     public Integer obtenerCantidadDeRecetasCreadas() {
@@ -88,22 +80,8 @@ public class CreadorServiceImpl implements ICreadorService {
 
     @Override
     @Transactional
-    public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException, FotoPerfilException {
-        if (fotoPerfil.isEmpty()) throw new IOException("El archivo de imagen está vacío");
-
-        String tipoArchivo = fotoPerfil.getContentType();
-        if (!tipoArchivo.equals("image/jpeg") && !tipoArchivo.equals("image/png") && !tipoArchivo.equals("image/jpg"))
-            throw new IOException("El archivo no es una foto válida");
-
-        String nombreArchivo = UUID.randomUUID().toString() + "_" + fotoPerfil.getOriginalFilename();
-        Path rutaCompleta = Paths.get(RUTA_IMAGENES + nombreArchivo);
-
-        try {
-            Files.createDirectory(rutaCompleta.getParent());
-            Files.write(rutaCompleta, fotoPerfil.getBytes());
-        } catch (IOException e) {
-            throw new FotoPerfilException("Error al guardar la foto", e);
-        }
+    public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws FotoPerfilException, IOException, ExecutionException, InterruptedException {
+        String nombreArchivo = uploadImage.guardarImagen(fotoPerfil).get();
 
         Long idCreador = obtenerIdCreadorAutenticado();
         Creador creador = creadorRepository.findById(idCreador)

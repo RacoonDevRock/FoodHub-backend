@@ -38,7 +38,7 @@ public class Creador {
     @Column(name = "codigo_colegiatura", nullable = false)
     private String codigoColegiatura;
 
-    @OneToMany(mappedBy = "creador")
+    @OneToMany(mappedBy = "creador", fetch = FetchType.LAZY)
     private List<Receta> recetas;
 
     @Column(name = "is_enabled")

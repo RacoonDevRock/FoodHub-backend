@@ -16,20 +16,25 @@ import lombok.NoArgsConstructor;
 public class CreadorRequest {
 
     @NotBlank(message = "Por favor agrega un nombre")
+    @Size(max = 20, message = "El nombre debe tener máximo 20 caracteres")
     private String nombre;
 
     @NotBlank(message = "Por favor agrega el apellido paterno")
+    @Size(max = 20, message = "El apellido paterno debe tener máximo 20 caracteres")
     private String apellidoPaterno;
 
     @NotBlank(message = "Por favor agrega el apellido materno")
+    @Size(max = 20, message = "El apellido materno debe tener máximo 20 caracteres")
     private String apellidoMaterno;
 
     @NotBlank(message = "Por favor agrega un correo")
+    @Size(max = 20, message = "El correo debe tener máximo 20 caracteres")
     @Email(message = "Por favor agrega un correo válido")
     private String correoElectronico;
 
     @NotBlank(message = "Por favor agrega una contraseña")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[A-Z]).*$", message = "La contraseña debe contener al menos un número y una letra mayúscula")
+    @Size(max = 15, message = "El correo debe tener máximo 15 caracteres")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[A-Z])[^\\s]+$", message = "La contraseña debe contener al menos un número y una letra mayúscula")
     private String contrasenia;
 
     @NotBlank(message = "Por favor ingresa un código de colegiatura")

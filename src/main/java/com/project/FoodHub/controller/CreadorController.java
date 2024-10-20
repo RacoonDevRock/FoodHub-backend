@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/creador")
@@ -20,12 +21,6 @@ import java.util.List;
 public class CreadorController {
 
     private final ICreadorService creadorService;
-
-    @GetMapping
-    public ResponseEntity<List<Creador>> mostrarCreadores() {
-        List<Creador> creadores = creadorService.mostrarCreadores();
-        return ResponseEntity.ok(creadores);
-    }
 
     @GetMapping("/cantidadRecetas")
     public ResponseEntity<Integer> obtenerCantidadRecetasCreadas() {
@@ -40,7 +35,7 @@ public class CreadorController {
     }
 
     @PostMapping("/actualizarFotoPerfil")
-    public ResponseEntity<MessageResponse> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) throws IOException, FotoPerfilException {
+    public ResponseEntity<MessageResponse> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) throws IOException, FotoPerfilException, ExecutionException, InterruptedException {
         MessageResponse response = creadorService.actualizarFotoPerfil(fotoPerfil);
         return ResponseEntity.ok(response);
     }
