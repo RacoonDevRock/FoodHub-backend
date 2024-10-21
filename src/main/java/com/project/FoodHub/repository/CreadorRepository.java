@@ -16,6 +16,7 @@ public interface CreadorRepository extends JpaRepository<Creador, Long> {
     int enableUser(String correo);
 
     Optional<Creador> findByCodigoColegiatura(String identificador);
-    Optional<Creador> findCreadorByCorreoElectronico (String correoElectronico);
+    Optional<Creador> findCreadorByCorreoElectronico(String correoElectronico);
+    Optional<Creador> findCreadorByTokenConfirmacion(String tokenConfirmacion);
 
 }

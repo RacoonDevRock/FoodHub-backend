@@ -41,6 +41,9 @@ public class Creador {
     @OneToMany(mappedBy = "creador", fetch = FetchType.LAZY)
     private List<Receta> recetas;
 
+    @Column(name = "token_confirmacion")
+    private String tokenConfirmacion;
+
     @Column(name = "is_enabled")
     private boolean isEnabled;
 

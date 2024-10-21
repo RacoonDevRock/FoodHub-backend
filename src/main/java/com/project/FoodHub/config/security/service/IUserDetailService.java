@@ -1,7 +1,6 @@
 package com.project.FoodHub.config.security.service;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.project.FoodHub.config.security.util.JwtUtils;
 import com.project.FoodHub.dto.*;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -30,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -128,6 +127,8 @@ public class IUserDetailService implements UserDetailsService {
         creador.setContrasenia(passwordEncoder.encode(creador.getContrasenia()));
         creador.setRole(Rol.USER);
 
+        String confirmationToken = UUID.randomUUID().toString();
+        creador.setTokenConfirmacion(confirmationToken);
         Creador creadorCreated = creadorService.guardarCreador(creador);
 
         SecurityContext securityContext = SecurityContextHolder.getContext();
@@ -138,9 +139,7 @@ public class IUserDetailService implements UserDetailsService {
 
         String accessToken = jwtUtils.createToken(authentication);
 
-        sendSimpleMessage(
-                creadorCreated.getCorreoElectronico(),
-                "Estimado/a " + creador.getNombre() + ",\n\nGracias por registrarte en nuestra plataforma 'FoodHub'. Por favor, haz clic en el siguiente enlace para confirmar tu cuenta:\n\n" + frontUrl + "/verificar/" + accessToken + "\n\nSaludos,\ny disfruta de una nueva experiencia.");
+        sendSimpleMessage(creadorCreated.getCorreoElectronico(), confirmationToken);
 
         scheduler.schedule(() -> {
             eliminarCreadorSinConfirmar(accessToken, creador.getCorreoElectronico());
@@ -166,32 +165,29 @@ public class IUserDetailService implements UserDetailsService {
         }
     }
 
-    private void sendSimpleMessage(String to, String text) {
+    private void sendSimpleMessage(String to, String confirmationToken) {
+        String linkConfirmacion = frontUrl + "/verificar/" + confirmationToken;
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(mailOrigin);
         message.setTo(to);
         message.setSubject("Account Verification - FoodHub");
-        message.setText(text);
+        message.setText("Estimado/a,\n\nGracias por registrarte en nuestra plataforma 'FoodHub'. Por favor, haz clic en el siguiente enlace para confirmar tu cuenta:\n\n" + linkConfirmacion + "\n\nSaludos,\ny disfruta de una nueva experiencia.");
         javaMailSender.send(message);
     }
 
     public MessageResponse confirmAccount(String token) {
+        Creador creador = creadorService.obtenerCreadorPorTokenConfirmacion(token);
+        if (creador == null) throw new CreadorNoEncontradoException("El usuario no existe o token no es valido.");
 
-        DecodedJWT decodedJWT = jwtUtils.validateToken(token);
-        String username = jwtUtils.extractUsername(decodedJWT);
-
-        Creador creador = creadorService.obtenerCreadorPorEmail(username);
-        if (creador == null) throw new CreadorNoEncontradoException("El usuario no existe.");
-
-        if (decodedJWT.getExpiresAt().before(new Date())) {
-            creadorService.eliminarCreadorPorEmail(username);
-            colegiadoService.actualizarCuentaConfirmada(creador.getCodigoColegiatura());
-            throw new TokenExpiradoException("Token ha expirado, debes registrarte nuevamente.");
+        if (creador.isEnabled()) {
+            throw new CorreoConfirmadoException("Esta cuenta ya ha sido confirmada.");
         }
 
         creador.setEnabled(true);
+        creador.setTokenConfirmacion(null);  // Eliminar el token temporal después de la confirmación
         creadorService.guardarCreador(creador);
 
-        return new MessageResponse("Cuenta confirmada exitosamente para " + username);
+        return new MessageResponse("Cuenta confirmada exitosamente");
     }
 }

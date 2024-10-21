@@ -27,4 +27,6 @@ public interface ICreadorService {
     MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws FotoPerfilException, IOException, ExecutionException, InterruptedException;
 
     void eliminarCreadorPorEmail(String correoElectronico);
+
+    Creador obtenerCreadorPorTokenConfirmacion(String tokenTemporal);
 }

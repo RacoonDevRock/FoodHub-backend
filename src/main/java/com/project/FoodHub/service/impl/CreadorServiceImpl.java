@@ -98,6 +98,16 @@ public class CreadorServiceImpl implements ICreadorService {
         creadorRepository.delete(creador);
     }
 
+    @Override
+    public Creador obtenerCreadorPorTokenConfirmacion(String tokenTemporal) {
+        return creadorRepository.findCreadorByTokenConfirmacion(tokenTemporal)
+                .orElseThrow(() -> {
+                    log.info("Token eliminado de la bd: razon del error");
+//                    return new CreadorNoEncontradoException("Usuario con token: " + tokenTemporal + " no encontrado");
+                    return null;
+                });
+    }
+
     private Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);
