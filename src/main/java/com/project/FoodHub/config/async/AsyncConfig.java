@@ -1,4 +1,4 @@
-package com.project.FoodHub.config;
+package com.project.FoodHub.config.async;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

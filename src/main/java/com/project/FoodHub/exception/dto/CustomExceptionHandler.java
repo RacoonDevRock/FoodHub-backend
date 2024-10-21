@@ -148,4 +148,11 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
+    @ExceptionHandler(DatosNoDisponiblesException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorMessage> handleIDatosNoDisponiblesException(DatosNoDisponiblesException exception) {
+        log.error("Datos no encontrados: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
 }

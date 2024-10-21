@@ -2,11 +2,11 @@ package com.project.FoodHub.controller;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.project.FoodHub.config.service.IUserDetailService;
+import com.project.FoodHub.config.security.service.IUserDetailService;
 import com.project.FoodHub.dto.*;
 import com.project.FoodHub.exception.CreadorNoEncontradoException;
 import com.project.FoodHub.exception.IncorrectCredentials;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -41,8 +41,22 @@ public class AutenticacionController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> iniciarSesion(@Valid @RequestBody AuthRequest authRequest) throws IncorrectCredentials {
-        return ResponseEntity.ok(userDetailService.iniciarSesion(authRequest));
+    public ResponseEntity<AuthResponse> iniciarSesion(@Valid @RequestBody AuthRequest authRequest, HttpServletResponse response) throws IncorrectCredentials {
+        AuthResponse authResponse = userDetailService.iniciarSesion(authRequest);
+
+        Cookie jwtCookie = new Cookie("JWT-TOKEN", authResponse.getToken());
+        jwtCookie.setHttpOnly(true);
+//        jwtCookie.setSecure(true); //en produccion (HTTPS)
+        jwtCookie.setMaxAge(3600);
+        jwtCookie.setPath("/");
+        response.addCookie(jwtCookie); // agrega cookie
+
+        String sameSiteCookie = String.format("%s=%s; Max-Age=%d; Path=%s; HttpOnly; Secure; SameSite=Strict",
+                jwtCookie.getName(), jwtCookie.getValue(), jwtCookie.getMaxAge(), jwtCookie.getPath());
+
+        response.setHeader("Set-Cookie", sameSiteCookie);
+
+        return ResponseEntity.ok(authResponse);
     }
 
 }

@@ -1,7 +1,9 @@
-package com.project.FoodHub.config.service;
+package com.project.FoodHub.config.security.service;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.project.FoodHub.config.util.JwtUtils;
+import com.project.FoodHub.config.security.util.JwtUtils;
 import com.project.FoodHub.dto.*;
 import com.project.FoodHub.entity.Creador;
 import com.project.FoodHub.enumeration.Rol;
@@ -13,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -26,6 +29,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -35,6 +43,7 @@ public class IUserDetailService implements UserDetailsService {
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender javaMailSender;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @Value("${spring.email.sender.user}")
     private String mailOrigin;
@@ -133,6 +142,28 @@ public class IUserDetailService implements UserDetailsService {
                 creadorCreated.getCorreoElectronico(),
                 "Estimado/a " + creador.getNombre() + ",\n\nGracias por registrarte en nuestra plataforma 'FoodHub'. Por favor, haz clic en el siguiente enlace para confirmar tu cuenta:\n\n" + frontUrl + "/verificar/" + accessToken + "\n\nSaludos,\ny disfruta de una nueva experiencia.");
 
+        scheduler.schedule(() -> {
+            eliminarCreadorSinConfirmar(accessToken, creador.getCorreoElectronico());
+        }, 15, TimeUnit.MINUTES);
+
+    }
+
+    private void eliminarCreadorSinConfirmar(String token, String correoElectronico) {
+        try {
+            DecodedJWT decodedJWT = JWT.decode(token);
+
+            if (decodedJWT.getExpiresAt().before(new Date())) {
+                Creador creador = creadorService.obtenerCreadorPorEmail(correoElectronico);
+
+                if (!creador.isEnabled()) {
+                    colegiadoService.actualizarCuentaConfirmada(creador.getCodigoColegiatura());
+                    creadorService.eliminarCreadorPorEmail(correoElectronico);
+                    log.info("Creador no confirmado eliminado: {}", correoElectronico);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error al eliminar creador no confirmado: ", e);
+        }
     }
 
     private void sendSimpleMessage(String to, String text) {
@@ -151,6 +182,12 @@ public class IUserDetailService implements UserDetailsService {
 
         Creador creador = creadorService.obtenerCreadorPorEmail(username);
         if (creador == null) throw new CreadorNoEncontradoException("El usuario no existe.");
+
+        if (decodedJWT.getExpiresAt().before(new Date())) {
+            creadorService.eliminarCreadorPorEmail(username);
+            colegiadoService.actualizarCuentaConfirmada(creador.getCodigoColegiatura());
+            throw new TokenExpiradoException("Token ha expirado, debes registrarte nuevamente.");
+        }
 
         creador.setEnabled(true);
         creadorService.guardarCreador(creador);

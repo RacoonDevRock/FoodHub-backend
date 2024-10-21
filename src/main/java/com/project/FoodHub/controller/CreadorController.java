@@ -2,17 +2,14 @@ package com.project.FoodHub.controller;
 
 import com.project.FoodHub.dto.CreadorDTO;
 import com.project.FoodHub.dto.MessageResponse;
-import com.project.FoodHub.entity.Creador;
 import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.service.ICreadorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController

@@ -1,4 +1,4 @@
-package com.project.FoodHub.config;
+package com.project.FoodHub.config.fileupload;
 
 import jakarta.servlet.MultipartConfigElement;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;

@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -44,15 +43,14 @@ public class CreadorServiceImpl implements ICreadorService {
     public CreadorDTO verPerfil() {
         Long idCreador = obtenerIdCreadorAutenticado();
 
-        Creador creador = creadorRepository.findById(idCreador)
-                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
-
-        return new CreadorDTO(creador.getNombre(),
-                creador.getApellidoPaterno(),
-                creador.getApellidoMaterno(),
-                creador.getCorreoElectronico(),
-                creador.getCodigoColegiatura(),
-                creador.getFotoPerfil());
+        return creadorRepository.findById(idCreador)
+                .map(creador -> new CreadorDTO(creador.getNombre(),
+                        creador.getApellidoPaterno(),
+                        creador.getApellidoMaterno(),
+                        creador.getCorreoElectronico(),
+                        creador.getCodigoColegiatura(),
+                        creador.getFotoPerfil()))
+                .orElseThrow(() -> new DatosNoDisponiblesException("No es posible mostrar los datos del perfil en este momento. Por favor, inténtalo más tarde."));
     }
 
     @Override
@@ -91,6 +89,13 @@ public class CreadorServiceImpl implements ICreadorService {
         creadorRepository.save(creador); // Guarda el cambio en la base de datos
 
         return new MessageResponse("Foto actualizada correctamente.");
+    }
+
+    @Override
+    @Transactional
+    public void eliminarCreadorPorEmail(String correoElectronico) {
+        Creador creador = obtenerCreadorPorEmail(correoElectronico);
+        creadorRepository.delete(creador);
     }
 
     private Long obtenerIdCreadorAutenticado() {

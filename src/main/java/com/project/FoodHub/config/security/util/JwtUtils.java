@@ -1,4 +1,4 @@
-package com.project.FoodHub.config.util;
+package com.project.FoodHub.config.security.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;

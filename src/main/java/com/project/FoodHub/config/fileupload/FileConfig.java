@@ -1,4 +1,4 @@
-package com.project.FoodHub.config;
+package com.project.FoodHub.config.fileupload;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
