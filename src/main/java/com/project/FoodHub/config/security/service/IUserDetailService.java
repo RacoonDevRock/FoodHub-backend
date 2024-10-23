@@ -1,7 +1,5 @@
 package com.project.FoodHub.config.security.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.project.FoodHub.config.security.util.JwtUtils;
 import com.project.FoodHub.dto.*;
 import com.project.FoodHub.entity.Creador;
@@ -14,10 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -114,6 +111,8 @@ public class IUserDetailService implements UserDetailsService {
                 request.getCodigoColegiatura()
         );
 
+        log.info(creador.getContrasenia());
+
         creadorService.guardarCreador(creador);
 
         crearCuenta(creador);
@@ -131,41 +130,30 @@ public class IUserDetailService implements UserDetailsService {
         creador.setTokenConfirmacion(confirmationToken);
         Creador creadorCreated = creadorService.guardarCreador(creador);
 
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(creadorCreated.getCorreoElectronico(),
-                        creadorCreated.getContrasenia(),
-                        AuthorityUtils.createAuthorityList(creadorCreated.getRole().name()));
-
-        String accessToken = jwtUtils.createToken(authentication);
-
         sendSimpleMessage(creadorCreated.getCorreoElectronico(), confirmationToken);
 
         scheduler.schedule(() -> {
-            eliminarCreadorSinConfirmar(accessToken, creador.getCorreoElectronico());
+            eliminarCreadorSinConfirmar(creador.getCorreoElectronico());
         }, 15, TimeUnit.MINUTES);
 
     }
 
-    private void eliminarCreadorSinConfirmar(String token, String correoElectronico) {
+    private void eliminarCreadorSinConfirmar(String correoElectronico) {
         try {
-            DecodedJWT decodedJWT = JWT.decode(token);
+            Creador creador = creadorService.obtenerCreadorPorEmail(correoElectronico);
 
-            if (decodedJWT.getExpiresAt().before(new Date())) {
-                Creador creador = creadorService.obtenerCreadorPorEmail(correoElectronico);
-
-                if (!creador.isEnabled()) {
-                    colegiadoService.actualizarCuentaConfirmada(creador.getCodigoColegiatura());
-                    creadorService.eliminarCreadorPorEmail(correoElectronico);
-                    log.info("Creador no confirmado eliminado: {}", correoElectronico);
-                }
+            if (!creador.isEnabled()) {
+                colegiadoService.actualizarCuentaConfirmada(creador.getCodigoColegiatura());
+                creadorService.eliminarCreadorPorEmail(correoElectronico);
+                log.info("Creador no confirmado eliminado: {}", correoElectronico);
             }
         } catch (Exception e) {
             log.error("Error al eliminar creador no confirmado: ", e);
         }
     }
 
-    private void sendSimpleMessage(String to, String confirmationToken) {
+    @Async("taskExecutor")
+    public void sendSimpleMessage(String to, String confirmationToken) {
         String linkConfirmacion = frontUrl + "/verificar/" + confirmationToken;
 
         SimpleMailMessage message = new SimpleMailMessage();
@@ -178,11 +166,6 @@ public class IUserDetailService implements UserDetailsService {
 
     public MessageResponse confirmAccount(String token) {
         Creador creador = creadorService.obtenerCreadorPorTokenConfirmacion(token);
-        if (creador == null) throw new CreadorNoEncontradoException("El usuario no existe o token no es valido.");
-
-        if (creador.isEnabled()) {
-            throw new CorreoConfirmadoException("Esta cuenta ya ha sido confirmada.");
-        }
 
         creador.setEnabled(true);
         creador.setTokenConfirmacion(null);  // Eliminar el token temporal después de la confirmación

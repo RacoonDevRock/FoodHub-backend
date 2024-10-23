@@ -23,7 +23,7 @@ public class JwtUtils {
     @Value("${security.jwt.user.generator}")
     private String userGenerator;
 
-    @Value("${security.jwt.expiration}")
+    @Value("${security.jwt.expiration}") // 900000 = 15 min
     private long expirationTime;
 
     public String createToken(Authentication authentication) {
@@ -58,6 +58,10 @@ public class JwtUtils {
 
     public String extractUsername(DecodedJWT decodedJWT) {
         return decodedJWT.getSubject();
+    }
+
+    public boolean isTokenExpired(DecodedJWT decodedJWT) {
+        return decodedJWT.getExpiresAt().before(new Date());
     }
 
     public Claim getSpecificClaim(DecodedJWT decodedJWT, String claimName) {

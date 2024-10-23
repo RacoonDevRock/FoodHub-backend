@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class AuthRequest {
 
     @NotBlank(message = "Por favor ingresa un correo electrónico.")
-    @Size(max = 20, message = "El correo debe tener máximo 20 caracteres")
+    @Size(max = 30, message = "El correo debe tener máximo 30 caracteres")
     private String identificador;
 
     @NotBlank(message = "Por favor ingresa una contraseña")

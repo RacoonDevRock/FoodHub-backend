@@ -28,7 +28,7 @@ public class CreadorRequest {
     private String apellidoMaterno;
 
     @NotBlank(message = "Por favor agrega un correo")
-    @Size(max = 20, message = "El correo debe tener máximo 20 caracteres")
+    @Size(max = 30, message = "El correo debe tener máximo 30 caracteres")
     @Email(message = "Por favor agrega un correo válido")
     private String correoElectronico;
 

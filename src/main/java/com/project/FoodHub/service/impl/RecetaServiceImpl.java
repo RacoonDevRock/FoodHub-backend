@@ -4,7 +4,10 @@ import com.project.FoodHub.dto.ConfirmacionResponse;
 import com.project.FoodHub.dto.RecetaDTOResponse;
 import com.project.FoodHub.dto.RecetaRequest;
 import com.project.FoodHub.dto.RecetasCategoriaResponse;
-import com.project.FoodHub.entity.*;
+import com.project.FoodHub.entity.Creador;
+import com.project.FoodHub.entity.Ingrediente;
+import com.project.FoodHub.entity.Instruccion;
+import com.project.FoodHub.entity.Receta;
 import com.project.FoodHub.enumeration.Categoria;
 import com.project.FoodHub.exception.*;
 import com.project.FoodHub.repository.CreadorRepository;
@@ -15,7 +18,6 @@ import com.project.FoodHub.service.ICreadorService;
 import com.project.FoodHub.service.IRecetaService;
 import com.project.FoodHub.service.UploadImage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,7 +50,7 @@ public class RecetaServiceImpl implements IRecetaService {
         Creador creador = creadorRepository.findById(idCreador)
                 .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
 
-        String nombreImagen =  uploadImage.guardarImagen(imagen).get();
+        String nombreImagen =  uploadImage.guardarImagen(imagen);
 
         Receta receta = Receta.builder()
                 .titulo(recetaRequest.getTitulo())
@@ -84,7 +86,6 @@ public class RecetaServiceImpl implements IRecetaService {
         instruccionRepository.saveAll(instrucciones); // Save all instructions in bulk
     }
 
-    @Cacheable(value = "recetasPorCategoria", key = "#categoria.toString() + '-' + #page + '-' + #size")
     @Override
     @Transactional
     public List<RecetasCategoriaResponse> mostrarRecetasPorCategoria(Categoria categoria, int page, int size) {

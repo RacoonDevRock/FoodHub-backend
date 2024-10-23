@@ -150,9 +150,30 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DatosNoDisponiblesException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ErrorMessage> handleIDatosNoDisponiblesException(DatosNoDisponiblesException exception) {
+    public ResponseEntity<ErrorMessage> handleDatosNoDisponiblesException(DatosNoDisponiblesException exception) {
         log.error("Datos no encontrados: {}", exception.getMessage());
         return buildResponseEntity(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(ArchivoVacioException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorMessage> handleArchivoVacioException(ArchivoVacioException exception) {
+        log.error("Archivo vacio: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(ImagenNoValidaException.class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    public ResponseEntity<ErrorMessage> handleImagenNoValidaException(ImagenNoValidaException exception) {
+        log.error("Image invalida: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.UNSUPPORTED_MEDIA_TYPE, exception.getMessage());
+    }
+
+    @ExceptionHandler(FotoPerfilException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<ErrorMessage> handleFotoPerfilException(FotoPerfilException exception) {
+        log.error("Error foto perfil: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
     }
 
 }

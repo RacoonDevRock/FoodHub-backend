@@ -1,9 +1,9 @@
 package com.project.FoodHub.repository;
 
 import com.project.FoodHub.dto.RecetasCategoriaResponse;
-import com.project.FoodHub.enumeration.Categoria;
 import com.project.FoodHub.entity.Creador;
 import com.project.FoodHub.entity.Receta;
+import com.project.FoodHub.enumeration.Categoria;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

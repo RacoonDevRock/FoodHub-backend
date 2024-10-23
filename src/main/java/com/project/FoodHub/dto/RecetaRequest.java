@@ -1,8 +1,8 @@
 package com.project.FoodHub.dto;
 
-import com.project.FoodHub.enumeration.Categoria;
 import com.project.FoodHub.entity.Ingrediente;
 import com.project.FoodHub.entity.Instruccion;
+import com.project.FoodHub.enumeration.Categoria;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

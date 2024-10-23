@@ -79,7 +79,7 @@ public class CreadorServiceImpl implements ICreadorService {
     @Override
     @Transactional
     public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws FotoPerfilException, IOException, ExecutionException, InterruptedException {
-        String nombreArchivo = uploadImage.guardarImagen(fotoPerfil).get();
+        String nombreArchivo = uploadImage.guardarImagen(fotoPerfil);
 
         Long idCreador = obtenerIdCreadorAutenticado();
         Creador creador = creadorRepository.findById(idCreador)
@@ -100,12 +100,24 @@ public class CreadorServiceImpl implements ICreadorService {
 
     @Override
     public Creador obtenerCreadorPorTokenConfirmacion(String tokenTemporal) {
-        return creadorRepository.findCreadorByTokenConfirmacion(tokenTemporal)
-                .orElseThrow(() -> {
-                    log.info("Token eliminado de la bd: razon del error");
-//                    return new CreadorNoEncontradoException("Usuario con token: " + tokenTemporal + " no encontrado");
-                    return null;
-                });
+        Optional<Creador> optionalCreador = creadorRepository.findCreadorByTokenConfirmacion(tokenTemporal);
+
+        if (!optionalCreador.isPresent()) {
+            verificarSiCorreoYaConfirmado(tokenTemporal);
+        }
+
+        return optionalCreador.get();
+    }
+
+    private void verificarSiCorreoYaConfirmado(String tokenTemporal) {
+        Optional<Creador> creadorConCorreoConfirmado = creadorRepository.findCreadorByCorreoElectronico(tokenTemporal)
+                .filter(Creador::isEnabled);
+
+        if (creadorConCorreoConfirmado.isPresent()) {
+            throw new CorreoConfirmadoException("Esta cuenta ya ha sido confirmada.");
+        }
+
+        throw new CreadorNoEncontradoException("Usuario con token: " + tokenTemporal + " no encontrado.");
     }
 
     private Long obtenerIdCreadorAutenticado() {

@@ -2,8 +2,8 @@ package com.project.FoodHub.controller;
 
 import com.project.FoodHub.dto.ConfirmacionResponse;
 import com.project.FoodHub.dto.RecetaDTOResponse;
-import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.dto.RecetaRequest;
+import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.enumeration.Categoria;
 import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.service.IRecetaService;
