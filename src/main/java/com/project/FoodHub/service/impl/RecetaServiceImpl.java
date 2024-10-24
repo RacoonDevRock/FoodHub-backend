@@ -9,7 +9,10 @@ import com.project.FoodHub.entity.Ingrediente;
 import com.project.FoodHub.entity.Instruccion;
 import com.project.FoodHub.entity.Receta;
 import com.project.FoodHub.enumeration.Categoria;
-import com.project.FoodHub.exception.*;
+import com.project.FoodHub.exception.CreadorNoEncontradoException;
+import com.project.FoodHub.exception.FotoPerfilException;
+import com.project.FoodHub.exception.RecetaNoEncontradaException;
+import com.project.FoodHub.exception.UsuarioNoAutenticadoException;
 import com.project.FoodHub.repository.CreadorRepository;
 import com.project.FoodHub.repository.IngredienteRepository;
 import com.project.FoodHub.repository.InstruccionRepository;
@@ -25,11 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +45,7 @@ public class RecetaServiceImpl implements IRecetaService {
 
     @Override
     @Transactional
-    public ConfirmacionResponse crearReceta(RecetaRequest recetaRequest, MultipartFile imagen) throws FotoPerfilException, IOException, ExecutionException, InterruptedException {
+    public ConfirmacionResponse crearReceta(RecetaRequest recetaRequest, MultipartFile imagen) throws FotoPerfilException {
         Long idCreador = obtenerIdCreadorAutenticado();
 
         Creador creador = creadorRepository.findById(idCreador)
@@ -104,9 +105,6 @@ public class RecetaServiceImpl implements IRecetaService {
                     .build();
             recetasResponse.add(recetaResponse);
         });
-
-        if (recetasResponse.isEmpty())
-            throw new ListaRecetasNulaException("No hay ninguna receta de esta categoría (" + categoria.toString() + ") por el momento ");
 
         return recetasResponse;
     }

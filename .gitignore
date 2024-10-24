@@ -37,3 +37,6 @@ build/
 
 ### Backup Directory ###
 /backups
+
+### .ENV ###
+.env
