@@ -26,12 +26,14 @@ public class RecetaRequest {
 
     @NotNull(message = "El tiempo de cocción no puede ser nulo")
     @Positive(message = "El tiempo de cocción debe ser un número positivo")
-    @Min(1) @Max(999)
+    @Min(value = 1, message = "El tiempo de cocción debe tener al menos 1 digito")
+//    @Max(value = 99, message = "El tiempo de cocción no puede tener más de 2 digitos")
     private Integer tiempoCoccion;
 
     @NotNull(message = "El número de porciones no puede ser nulo")
     @Positive(message = "El número de porciones debe ser un número positivo")
-    @Min(1) @Max(99)
+    @Min(value = 1, message = "Las porciones deben tener al menos 1 digito")
+//    @Max(value = 99, message = "Las porciones no puede tener más de 2 digitos")
     private Integer porciones;
 
     @NotNull(message = "Las calorías no pueden ser nulas")

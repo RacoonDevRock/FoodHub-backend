@@ -5,6 +5,7 @@ import com.project.FoodHub.dto.RecetaDTOResponse;
 import com.project.FoodHub.dto.RecetaRequest;
 import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.enumeration.Categoria;
+import com.project.FoodHub.exception.ArchivoVacioException;
 import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.service.IRecetaService;
 import jakarta.validation.Valid;
@@ -13,9 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/explorar")
@@ -27,7 +26,12 @@ public class RecetaController {
     @PostMapping("/crear")
     public ResponseEntity<ConfirmacionResponse> crearReceta(
             @Valid @RequestPart("receta") RecetaRequest recetaRequest,
-            @RequestPart("imagen") MultipartFile imagen) throws IOException, FotoPerfilException, ExecutionException, InterruptedException {
+            @RequestPart("imagen") MultipartFile imagen) throws FotoPerfilException {
+
+        if (imagen == null || imagen.isEmpty()) {
+            throw new ArchivoVacioException("El archivo de imagen está vacío o no se envió");
+        }
+
         return ResponseEntity.ok(recetaService.crearReceta(recetaRequest, imagen));
     }
 

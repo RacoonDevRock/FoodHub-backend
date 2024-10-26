@@ -13,7 +13,7 @@ import java.util.UUID;
 public class BackupService {
     private static final String BACKUP_DIR = "backups/";
 
-//    @Scheduled(fixedRate = 300000)
+//    @Scheduled(cron = "0 */15 * * * ?") // cada 15 min
     @Scheduled(cron = "0 0 0 */15 * ?")
     public void backup() {
         try {
