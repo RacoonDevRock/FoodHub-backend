@@ -54,7 +54,7 @@ public class AutenticacionController {
         jwtCookie.setPath("/");
         response.addCookie(jwtCookie); // agrega cookie
 
-        String sameSiteCookie = String.format("%s=%s; Max-Age=%d; Path=%s; HttpOnly; Secure; SameSite=Lax",
+        String sameSiteCookie = String.format("%s=%s; Max-Age=%d; Path=%s; HttpOnly; Secure; SameSite=None",
                 jwtCookie.getName(), jwtCookie.getValue(), jwtCookie.getMaxAge(), jwtCookie.getPath());
 
         response.setHeader("Set-Cookie", sameSiteCookie);
