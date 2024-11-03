@@ -19,4 +19,6 @@ public interface CreadorRepository extends JpaRepository<Creador, Long> {
     Optional<Creador> findCreadorByCorreoElectronico(String correoElectronico);
     Optional<Creador> findCreadorByTokenConfirmacion(String tokenConfirmacion);
 
+    @Query("SELECT c FROM Creador c JOIN c.recetas r WHERE r.id = :recetaId")
+    Optional<Creador> findCreadorByRecetaId(Long recetaId);
 }

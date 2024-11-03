@@ -138,6 +138,14 @@ public class RecetaServiceImpl implements IRecetaService {
         return receta.getImagen();
     }
 
+    @Override
+    public String obtenerImagenAutor(Long idReceta) {
+        Creador creador = creadorRepository.findCreadorByRecetaId(idReceta)
+                .orElseThrow(() -> new CreadorNoEncontradoException("Receta no encontrada"));
+
+        return creador.getFotoPerfil();
+    }
+
     private Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);

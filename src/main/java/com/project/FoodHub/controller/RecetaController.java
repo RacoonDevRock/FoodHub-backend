@@ -58,17 +58,28 @@ public class RecetaController {
 
     @GetMapping("/{idReceta}/imagen")
     public ResponseEntity<Resource> obtenerUrlImagen(@PathVariable("idReceta") Long idReceta) {
-
-        String googleDriveUrl = recetaService.obtenerUrlImagen(idReceta);
-
-        RestTemplate restTemplate = new RestTemplate();
-        byte[] imageBytes = restTemplate.getForObject(googleDriveUrl, byte[].class);
-
-        ByteArrayResource resource = new ByteArrayResource(imageBytes);
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + idReceta + ".jpg\"")
-                .body(resource);
+        return obtenerImagenDesdeUrl(recetaService.obtenerUrlImagen(idReceta), idReceta + "-receta.jpg");
     }
 
+    @GetMapping("/{idReceta}/foto-autor")
+    public ResponseEntity<Resource> obtenerImagenAutor(@PathVariable("idReceta") Long idReceta) {
+        return obtenerImagenDesdeUrl(recetaService.obtenerImagenAutor(idReceta), idReceta + "-autor.jpg");
+    }
+
+    private ResponseEntity<Resource> obtenerImagenDesdeUrl(String url, String filename) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            byte[] imageBytes = restTemplate.getForObject(url, byte[].class);
+            ByteArrayResource resource = new ByteArrayResource(imageBytes);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            // Manejo de errores, puedes personalizar el mensaje o respuesta
+            return ResponseEntity.status(404).body(null);
+        }
+    }
 }

@@ -20,4 +20,6 @@ public interface IRecetaService {
 
     String obtenerUrlImagen(Long idReceta);
 
+    String obtenerImagenAutor(Long idReceta);
+
 }
