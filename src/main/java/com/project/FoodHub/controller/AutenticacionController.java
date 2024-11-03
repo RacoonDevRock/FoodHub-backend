@@ -49,7 +49,7 @@ public class AutenticacionController {
 
         Cookie jwtCookie = new Cookie("JWT-TOKEN", authResponse.getToken());
         jwtCookie.setHttpOnly(true);
-//        jwtCookie.setSecure(true); //en produccion (HTTPS)
+        jwtCookie.setSecure(true); //en produccion (HTTPS)
         jwtCookie.setMaxAge(1800); // 30 min en seg
         jwtCookie.setPath("/");
         response.addCookie(jwtCookie); // agrega cookie
