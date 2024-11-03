@@ -131,6 +131,13 @@ public class RecetaServiceImpl implements IRecetaService {
         );
     }
 
+    @Override
+    public String obtenerUrlImagen(Long idReceta) {
+        Receta receta = recetaRepository.findById(idReceta)
+                .orElseThrow(() -> new RecetaNoEncontradaException("Receta no encontrada"));
+        return receta.getImagen();
+    }
+
     private Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);

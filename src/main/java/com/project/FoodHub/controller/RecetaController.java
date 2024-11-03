@@ -10,8 +10,13 @@ import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.service.IRecetaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -49,6 +54,21 @@ public class RecetaController {
     public ResponseEntity<RecetaDTOResponse> verReceta(@PathVariable("idReceta") Long idReceta) {
         RecetaDTOResponse receta = recetaService.verReceta(idReceta);
         return ResponseEntity.ok(receta);
+    }
+
+    @GetMapping("/{idReceta}/imagen")
+    public ResponseEntity<Resource> obtenerUrlImagen(@PathVariable("idReceta") Long idReceta) {
+
+        String googleDriveUrl = recetaService.obtenerUrlImagen(idReceta);
+
+        RestTemplate restTemplate = new RestTemplate();
+        byte[] imageBytes = restTemplate.getForObject(googleDriveUrl, byte[].class);
+
+        ByteArrayResource resource = new ByteArrayResource(imageBytes);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + idReceta + ".jpg\"")
+                .body(resource);
     }
 
 }

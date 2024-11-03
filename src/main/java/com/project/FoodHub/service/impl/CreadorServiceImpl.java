@@ -33,8 +33,7 @@ public class CreadorServiceImpl implements ICreadorService {
     public Integer obtenerCantidadDeRecetasCreadas() {
         Long idCreador = obtenerIdCreadorAutenticado();
 
-        Creador creador = creadorRepository.findById(idCreador)
-                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
+        Creador creador = obtenerCreadorPorId(idCreador);
 
         return recetaRepository.countByCreador(creador);
     }
@@ -82,8 +81,7 @@ public class CreadorServiceImpl implements ICreadorService {
         String nombreArchivo = uploadImage.guardarImagen(fotoPerfil);
 
         Long idCreador = obtenerIdCreadorAutenticado();
-        Creador creador = creadorRepository.findById(idCreador)
-                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado"));
+        Creador creador = obtenerCreadorPorId(idCreador);
 
         creador.setFotoPerfil(nombreArchivo);
         creadorRepository.save(creador); // Guarda el cambio en la base de datos
@@ -109,6 +107,20 @@ public class CreadorServiceImpl implements ICreadorService {
         return optionalCreador.get();
     }
 
+    @Override
+    public Long obtenerIdCreadorAutenticado() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        validarAutenticacion(authentication);
+        String email = authentication.getName();
+        return obtenerCreadorPorEmail(email).getIdCreador();
+    }
+
+    @Override
+    public Creador obtenerCreadorPorId(Long id) {
+        return creadorRepository.findById(id)
+                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + id));
+    }
+
     private void verificarSiCorreoYaConfirmado(String tokenTemporal) {
         Optional<Creador> creadorConCorreoConfirmado = creadorRepository.findCreadorByCorreoElectronico(tokenTemporal)
                 .filter(Creador::isEnabled);
@@ -118,13 +130,6 @@ public class CreadorServiceImpl implements ICreadorService {
         }
 
         throw new CreadorNoEncontradoException("Usuario con token: " + tokenTemporal + " no encontrado.");
-    }
-
-    private Long obtenerIdCreadorAutenticado() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        validarAutenticacion(authentication);
-        String email = authentication.getName();
-        return obtenerCreadorPorEmail(email).getIdCreador();
     }
 
     private void validarAutenticacion(Authentication authentication) {

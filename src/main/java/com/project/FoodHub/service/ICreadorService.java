@@ -29,4 +29,8 @@ public interface ICreadorService {
     void eliminarCreadorPorEmail(String correoElectronico);
 
     Creador obtenerCreadorPorTokenConfirmacion(String tokenTemporal);
+
+    Long obtenerIdCreadorAutenticado();
+
+    Creador obtenerCreadorPorId(Long id);
 }

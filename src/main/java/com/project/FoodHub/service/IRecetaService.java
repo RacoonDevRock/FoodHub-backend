@@ -18,4 +18,6 @@ public interface IRecetaService {
 
     RecetaDTOResponse verReceta(Long idReceta);
 
+    String obtenerUrlImagen(Long idReceta);
+
 }
