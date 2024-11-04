@@ -47,10 +47,13 @@ public class CreadorController {
     @GetMapping("/FotoPerfil")
     public ResponseEntity<Resource> obtenerFotoPerfil() {
         Long idCreador = creadorService.obtenerIdCreadorAutenticado();
-
         Creador creador = creadorService.obtenerCreadorPorId(idCreador);
 
         String googleDriveUrl = creador.getFotoPerfil();
+
+        if (googleDriveUrl == null || googleDriveUrl.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
 
         RestTemplate restTemplate = new RestTemplate();
         byte[] imageBytes = restTemplate.getForObject(googleDriveUrl, byte[].class);
