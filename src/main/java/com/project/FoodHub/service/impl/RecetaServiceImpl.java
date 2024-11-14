@@ -4,10 +4,13 @@ import com.project.FoodHub.dto.ConfirmacionResponse;
 import com.project.FoodHub.dto.RecetaDTOResponse;
 import com.project.FoodHub.dto.RecetaRequest;
 import com.project.FoodHub.dto.RecetasCategoriaResponse;
-import com.project.FoodHub.entity.*;
+import com.project.FoodHub.entity.Creador;
+import com.project.FoodHub.entity.Ingrediente;
+import com.project.FoodHub.entity.Instruccion;
+import com.project.FoodHub.entity.Receta;
 import com.project.FoodHub.enumeration.Categoria;
 import com.project.FoodHub.exception.CreadorNoEncontradoException;
-import com.project.FoodHub.exception.ListaRecetasNulaException;
+import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.exception.RecetaNoEncontradaException;
 import com.project.FoodHub.exception.UsuarioNoAutenticadoException;
 import com.project.FoodHub.repository.CreadorRepository;
@@ -16,21 +19,18 @@ import com.project.FoodHub.repository.InstruccionRepository;
 import com.project.FoodHub.repository.RecetaRepository;
 import com.project.FoodHub.service.ICreadorService;
 import com.project.FoodHub.service.IRecetaService;
+import com.project.FoodHub.service.UploadImage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,18 +41,17 @@ public class RecetaServiceImpl implements IRecetaService {
     private final IngredienteRepository ingredienteRepository;
     private final InstruccionRepository instruccionRepository;
     private final ICreadorService creadorService;
-
-    public static final String RUTA_IMAGENES = "imagenes/";
+    private final UploadImage uploadImage;
 
     @Override
     @Transactional
-    public ConfirmacionResponse crearReceta(RecetaRequest recetaRequest, MultipartFile imagen) throws IOException {
+    public ConfirmacionResponse crearReceta(RecetaRequest recetaRequest, MultipartFile imagen) throws FotoPerfilException {
         Long idCreador = obtenerIdCreadorAutenticado();
 
         Creador creador = creadorRepository.findById(idCreador)
                 .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
 
-        String nombreImagen = guardarImagen(imagen);
+        String nombreImagen =  uploadImage.guardarImagen(imagen);
 
         Receta receta = Receta.builder()
                 .titulo(recetaRequest.getTitulo())
@@ -69,62 +68,43 @@ public class RecetaServiceImpl implements IRecetaService {
 
         recetaRepository.save(receta);
 
-        for (Ingrediente ingrediente : recetaRequest.getIngredientes()) {
-            agregarIngrediente(receta, ingrediente);
-        }
+        agregarIngrediente(receta, recetaRequest.getIngredientes());
 
-        for (Instruccion instruccion : recetaRequest.getInstrucciones()) {
-            agregarInstruccion(receta, instruccion);
-        }
+        agregarInstruccion(receta, recetaRequest.getInstrucciones());
 
         return new ConfirmacionResponse("Receta creada de forma exitosa", "success");
     }
 
-    private String guardarImagen(MultipartFile imagen) throws IOException {
-        if (imagen.isEmpty()) throw new IOException("El archivo de imagen está vacío");
+    @Transactional
+    public void agregarIngrediente(Receta receta, List<Ingrediente> ingredientes) {
+        ingredientes.forEach(ingrediente -> ingrediente.setReceta(receta));
+        ingredienteRepository.saveAll(ingredientes);
+    }
 
-        String tipoArchivo = imagen.getContentType();
-        if (!tipoArchivo.equals("image/jpeg") && !tipoArchivo.equals("image/png"))
-            throw new IOException("El archivo no es una imagen válida");
-
-        String nombreArchivo = UUID.randomUUID().toString() + "_" + imagen.getOriginalFilename();
-
-        Path rutaCompleta = Paths.get(RUTA_IMAGENES + nombreArchivo);
-
-        Files.createDirectories(rutaCompleta.getParent());
-
-        Files.write(rutaCompleta, imagen.getBytes());
-
-        return nombreArchivo;
+    @Transactional
+    public void agregarInstruccion(Receta receta, List<Instruccion> instrucciones) {
+        instrucciones.forEach(instruccion -> instruccion.setReceta(receta));
+        instruccionRepository.saveAll(instrucciones); // Save all instructions in bulk
     }
 
     @Override
     @Transactional
-    public void agregarIngrediente(Receta receta, Ingrediente ingrediente) {
-        ingrediente.setReceta(receta);
-        receta.getIngredientes().add(ingrediente);
+    public List<RecetasCategoriaResponse> mostrarRecetasPorCategoria(Categoria categoria, int page, int size) {
 
-        ingredienteRepository.save(ingrediente);
-    }
-
-    @Override
-    @Transactional
-    public List<RecetasCategoriaResponse> mostrarRecetasPorCategoria(Categoria categoria) {
-        Optional<List<Receta>> recetasOptional = recetaRepository.findByCategoria(categoria);
+        PageRequest pageRequest = PageRequest.of(page, size);
+        var recetasPage = recetaRepository.findByCategoria(categoria, pageRequest);
 
         List<RecetasCategoriaResponse> recetasResponse = new ArrayList<>();
 
-        List<Receta> recetas = recetasOptional.orElseThrow(() -> new ListaRecetasNulaException("La lista de recetas es nula"));
-
-        for (Receta receta : recetas) {
-            RecetasCategoriaResponse recetasCategoriaResponse = RecetasCategoriaResponse.builder()
+        recetasPage.forEach(receta -> {
+            RecetasCategoriaResponse recetaResponse = RecetasCategoriaResponse.builder()
                     .id(receta.getId())
                     .titulo(receta.getTitulo())
                     .descripcion(receta.getDescripcion())
-                    .imagenReceta(receta.getImagen())
+                    .imagenReceta(receta.getImagenReceta())
                     .build();
-            recetasResponse.add(recetasCategoriaResponse);
-        }
+            recetasResponse.add(recetaResponse);
+        });
 
         return recetasResponse;
     }
@@ -151,11 +131,19 @@ public class RecetaServiceImpl implements IRecetaService {
         );
     }
 
-    private void agregarInstruccion(Receta receta, Instruccion instruccion) {
-        instruccion.setReceta(receta);
-        receta.getInstrucciones().add(instruccion);
+    @Override
+    public String obtenerUrlImagen(Long idReceta) {
+        Receta receta = recetaRepository.findById(idReceta)
+                .orElseThrow(() -> new RecetaNoEncontradaException("Receta no encontrada"));
+        return receta.getImagen();
+    }
 
-        instruccionRepository.save(instruccion);
+    @Override
+    public String obtenerImagenAutor(Long idReceta) {
+        Creador creador = creadorRepository.findCreadorByRecetaId(idReceta)
+                .orElseThrow(() -> new CreadorNoEncontradoException("Receta no encontrada"));
+
+        return creador.getFotoPerfil();
     }
 
     private Long obtenerIdCreadorAutenticado() {

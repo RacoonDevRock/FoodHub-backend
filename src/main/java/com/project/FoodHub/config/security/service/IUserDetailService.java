@@ -1,7 +1,6 @@
-package com.project.FoodHub.config.service;
+package com.project.FoodHub.config.security.service;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.project.FoodHub.config.util.JwtUtils;
+import com.project.FoodHub.config.security.util.JwtUtils;
 import com.project.FoodHub.dto.*;
 import com.project.FoodHub.entity.Creador;
 import com.project.FoodHub.enumeration.Rol;
@@ -13,10 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +24,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -35,6 +39,7 @@ public class IUserDetailService implements UserDetailsService {
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender javaMailSender;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @Value("${spring.email.sender.user}")
     private String mailOrigin;
@@ -106,6 +111,8 @@ public class IUserDetailService implements UserDetailsService {
                 request.getCodigoColegiatura()
         );
 
+        log.info(creador.getContrasenia());
+
         creadorService.guardarCreador(creador);
 
         crearCuenta(creador);
@@ -119,42 +126,51 @@ public class IUserDetailService implements UserDetailsService {
         creador.setContrasenia(passwordEncoder.encode(creador.getContrasenia()));
         creador.setRole(Rol.USER);
 
+        String confirmationToken = UUID.randomUUID().toString();
+        creador.setTokenConfirmacion(confirmationToken);
         Creador creadorCreated = creadorService.guardarCreador(creador);
 
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(creadorCreated.getCorreoElectronico(),
-                        creadorCreated.getContrasenia(),
-                        AuthorityUtils.createAuthorityList(creadorCreated.getRole().name()));
+        sendSimpleMessage(creadorCreated.getCorreoElectronico(), confirmationToken);
 
-        String accessToken = jwtUtils.createToken(authentication);
-
-        sendSimpleMessage(
-                creadorCreated.getCorreoElectronico(),
-                "Estimado/a " + creador.getNombre() + ",\n\nGracias por registrarte en nuestra plataforma 'FoodHub'. Por favor, haz clic en el siguiente enlace para confirmar tu cuenta:\n\n" + frontUrl + "/verificar/" + accessToken + "\n\nSaludos,\ny disfruta de una nueva experiencia.");
+        scheduler.schedule(() -> {
+            eliminarCreadorSinConfirmar(creador.getCorreoElectronico());
+        }, 15, TimeUnit.MINUTES);
 
     }
 
-    private void sendSimpleMessage(String to, String text) {
+    private void eliminarCreadorSinConfirmar(String correoElectronico) {
+        try {
+            Creador creador = creadorService.obtenerCreadorPorEmail(correoElectronico);
+
+            if (!creador.isEnabled()) {
+                colegiadoService.actualizarCuentaConfirmada(creador.getCodigoColegiatura());
+                creadorService.eliminarCreadorPorEmail(correoElectronico);
+                log.info("Creador no confirmado eliminado: {}", correoElectronico);
+            }
+        } catch (Exception e) {
+            log.error("Error al eliminar creador no confirmado: ", e);
+        }
+    }
+
+    @Async("taskExecutor")
+    public void sendSimpleMessage(String to, String confirmationToken) {
+        String linkConfirmacion = frontUrl + "/verificar/" + confirmationToken;
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(mailOrigin);
         message.setTo(to);
         message.setSubject("Account Verification - FoodHub");
-        message.setText(text);
+        message.setText("Estimado/a,\n\nGracias por registrarte en nuestra plataforma 'FoodHub'. Por favor, haz clic en el siguiente enlace para confirmar tu cuenta:\n\n" + linkConfirmacion + "\n\nSaludos,\ny disfruta de una nueva experiencia.");
         javaMailSender.send(message);
     }
 
     public MessageResponse confirmAccount(String token) {
-
-        DecodedJWT decodedJWT = jwtUtils.validateToken(token);
-        String username = jwtUtils.extractUsername(decodedJWT);
-
-        Creador creador = creadorService.obtenerCreadorPorEmail(username);
-        if (creador == null) throw new CreadorNoEncontradoException("El usuario no existe.");
+        Creador creador = creadorService.obtenerCreadorPorTokenConfirmacion(token);
 
         creador.setEnabled(true);
+        creador.setTokenConfirmacion(null);  // Eliminar el token temporal después de la confirmación
         creadorService.guardarCreador(creador);
 
-        return new MessageResponse("Cuenta confirmada exitosamente para " + username);
+        return new MessageResponse("Cuenta confirmada exitosamente");
     }
 }

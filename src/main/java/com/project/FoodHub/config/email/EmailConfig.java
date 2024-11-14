@@ -1,4 +1,4 @@
-package com.project.FoodHub.email;
+package com.project.FoodHub.config.email;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

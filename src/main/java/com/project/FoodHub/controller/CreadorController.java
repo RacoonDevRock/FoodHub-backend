@@ -3,16 +3,21 @@ package com.project.FoodHub.controller;
 import com.project.FoodHub.dto.CreadorDTO;
 import com.project.FoodHub.dto.MessageResponse;
 import com.project.FoodHub.entity.Creador;
+import com.project.FoodHub.exception.CreadorNoEncontradoException;
 import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.service.ICreadorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/creador")
@@ -20,12 +25,6 @@ import java.util.List;
 public class CreadorController {
 
     private final ICreadorService creadorService;
-
-    @GetMapping
-    public ResponseEntity<List<Creador>> mostrarCreadores() {
-        List<Creador> creadores = creadorService.mostrarCreadores();
-        return ResponseEntity.ok(creadores);
-    }
 
     @GetMapping("/cantidadRecetas")
     public ResponseEntity<Integer> obtenerCantidadRecetasCreadas() {
@@ -40,8 +39,29 @@ public class CreadorController {
     }
 
     @PostMapping("/actualizarFotoPerfil")
-    public ResponseEntity<MessageResponse> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) throws IOException, FotoPerfilException {
+    public ResponseEntity<MessageResponse> actualizarFotoPerfil(@RequestPart("fotoPerfil") MultipartFile fotoPerfil) throws IOException, FotoPerfilException, ExecutionException, InterruptedException {
         MessageResponse response = creadorService.actualizarFotoPerfil(fotoPerfil);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/FotoPerfil")
+    public ResponseEntity<Resource> obtenerFotoPerfil() {
+        Long idCreador = creadorService.obtenerIdCreadorAutenticado();
+        Creador creador = creadorService.obtenerCreadorPorId(idCreador);
+
+        String googleDriveUrl = creador.getFotoPerfil();
+
+        if (googleDriveUrl == null || googleDriveUrl.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        RestTemplate restTemplate = new RestTemplate();
+        byte[] imageBytes = restTemplate.getForObject(googleDriveUrl, byte[].class);
+
+        ByteArrayResource resource = new ByteArrayResource(imageBytes);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + idCreador + ".jpg\"")
+                .body(resource);
     }
 }

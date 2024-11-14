@@ -11,4 +11,5 @@ public interface IColegiadoService {
 
     void confirmarCuenta(String codigoColegiado);
 
+    void actualizarCuentaConfirmada(String codigoColegiatura);
 }

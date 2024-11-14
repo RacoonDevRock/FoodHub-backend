@@ -1,9 +1,8 @@
-package com.project.FoodHub.config;
+package com.project.FoodHub.config.security;
 
-import com.project.FoodHub.config.Jwt.JwtTokenValidator;
-import com.project.FoodHub.config.service.IUserDetailService;
-import com.project.FoodHub.config.util.JwtUtils;
-import com.project.FoodHub.service.ICreadorService;
+import com.project.FoodHub.config.security.Jwt.JwtTokenValidator;
+import com.project.FoodHub.config.security.service.IUserDetailService;
+import com.project.FoodHub.config.security.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,7 +51,8 @@ public class SecurityConfig {
                 new AntPathRequestMatcher("/auth/**"),
                 new AntPathRequestMatcher("/explorar/recetas/**"),
                 new AntPathRequestMatcher("/explorar/{idReceta}"),
-                new AntPathRequestMatcher("/imagenes/**")
+                new AntPathRequestMatcher("/explorar/{idReceta}/imagen"),
+                new AntPathRequestMatcher("/explorar/{idReceta}/foto-autor")
 //                new AntPathRequestMatcher("/v3/api-docs/**"),
 //                new AntPathRequestMatcher("/swagger-ui/**"),
 //                new AntPathRequestMatcher("/swagger-ui.html")

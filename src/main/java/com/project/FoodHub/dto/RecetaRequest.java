@@ -1,13 +1,10 @@
 package com.project.FoodHub.dto;
 
-import com.project.FoodHub.enumeration.Categoria;
 import com.project.FoodHub.entity.Ingrediente;
 import com.project.FoodHub.entity.Instruccion;
+import com.project.FoodHub.enumeration.Categoria;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,19 +17,23 @@ import java.util.List;
 public class RecetaRequest {
 
     @NotBlank(message = "El título no puede estar en blanco")
-    @Size(max = 255, message = "El título no puede tener más de 255 caracteres")
+    @Size(max = 100, message = "El título erno puede tener más de 100 caractes")
     private String titulo;
 
     @NotBlank(message = "La descripción no puede estar en blanco")
-    @Size(max = 1000, message = "La descripción no puede tener más de 1000 caracteres")
+    @Size(max = 250, message = "La descripción no puede tener más de 250 caracteres")
     private String descripcion;
 
     @NotNull(message = "El tiempo de cocción no puede ser nulo")
     @Positive(message = "El tiempo de cocción debe ser un número positivo")
+    @Min(value = 1, message = "El tiempo de cocción debe tener al menos 1 digito")
+//    @Max(value = 99, message = "El tiempo de cocción no puede tener más de 2 digitos")
     private Integer tiempoCoccion;
 
     @NotNull(message = "El número de porciones no puede ser nulo")
     @Positive(message = "El número de porciones debe ser un número positivo")
+    @Min(value = 1, message = "Las porciones deben tener al menos 1 digito")
+//    @Max(value = 99, message = "Las porciones no puede tener más de 2 digitos")
     private Integer porciones;
 
     @NotNull(message = "Las calorías no pueden ser nulas")

@@ -2,19 +2,23 @@ package com.project.FoodHub.controller;
 
 import com.project.FoodHub.dto.ConfirmacionResponse;
 import com.project.FoodHub.dto.RecetaDTOResponse;
-import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.dto.RecetaRequest;
+import com.project.FoodHub.dto.RecetasCategoriaResponse;
 import com.project.FoodHub.enumeration.Categoria;
-import com.project.FoodHub.entity.Receta;
+import com.project.FoodHub.exception.ArchivoVacioException;
+import com.project.FoodHub.exception.FotoPerfilException;
 import com.project.FoodHub.service.IRecetaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -27,14 +31,23 @@ public class RecetaController {
     @PostMapping("/crear")
     public ResponseEntity<ConfirmacionResponse> crearReceta(
             @Valid @RequestPart("receta") RecetaRequest recetaRequest,
-            @RequestPart("imagen") MultipartFile imagen) throws IOException {
+            @RequestPart("imagen") MultipartFile imagen) throws FotoPerfilException {
+
+        if (imagen == null || imagen.isEmpty()) {
+            throw new ArchivoVacioException("El archivo de imagen está vacío o no se envió");
+        }
+
         return ResponseEntity.ok(recetaService.crearReceta(recetaRequest, imagen));
     }
 
     @GetMapping("/recetas")
-    public List<RecetasCategoriaResponse> mostrarRecetasPorCategoria(@RequestParam("categoria") String categoriaStr) {
+    public List<RecetasCategoriaResponse> mostrarRecetasPorCategoria(
+            @RequestParam("categoria") String categoriaStr,
+            @RequestParam(defaultValue = "0") int page, // Número de página
+            @RequestParam(defaultValue = "6") int size) {
+
         Categoria categoria = Categoria.fromString(categoriaStr);
-        return recetaService.mostrarRecetasPorCategoria(categoria);
+        return recetaService.mostrarRecetasPorCategoria(categoria, page, size);
     }
 
     @GetMapping("/{idReceta}")
@@ -43,4 +56,30 @@ public class RecetaController {
         return ResponseEntity.ok(receta);
     }
 
+    @GetMapping("/{idReceta}/imagen")
+    public ResponseEntity<Resource> obtenerUrlImagen(@PathVariable("idReceta") Long idReceta) {
+        return obtenerImagenDesdeUrl(recetaService.obtenerUrlImagen(idReceta), idReceta + "-receta.jpg");
+    }
+
+    @GetMapping("/{idReceta}/foto-autor")
+    public ResponseEntity<Resource> obtenerImagenAutor(@PathVariable("idReceta") Long idReceta) {
+        return obtenerImagenDesdeUrl(recetaService.obtenerImagenAutor(idReceta), idReceta + "-autor.jpg");
+    }
+
+    private ResponseEntity<Resource> obtenerImagenDesdeUrl(String url, String filename) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            byte[] imageBytes = restTemplate.getForObject(url, byte[].class);
+            ByteArrayResource resource = new ByteArrayResource(imageBytes);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            // Manejo de errores, puedes personalizar el mensaje o respuesta
+            return ResponseEntity.status(404).body(null);
+        }
+    }
 }

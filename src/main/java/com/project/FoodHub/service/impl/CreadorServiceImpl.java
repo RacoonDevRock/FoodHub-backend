@@ -7,6 +7,7 @@ import com.project.FoodHub.exception.*;
 import com.project.FoodHub.repository.CreadorRepository;
 import com.project.FoodHub.repository.RecetaRepository;
 import com.project.FoodHub.service.ICreadorService;
+import com.project.FoodHub.service.UploadImage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -16,12 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -30,20 +27,13 @@ public class CreadorServiceImpl implements ICreadorService {
 
     private final CreadorRepository creadorRepository;
     private final RecetaRepository recetaRepository;
-
-    public static final String RUTA_IMAGENES = "imagenes/";
-
-    @Override
-    public List<Creador> mostrarCreadores() {
-        return creadorRepository.findAll();
-    }
+    private final UploadImage uploadImage;
 
     @Override
     public Integer obtenerCantidadDeRecetasCreadas() {
         Long idCreador = obtenerIdCreadorAutenticado();
 
-        Creador creador = creadorRepository.findById(idCreador)
-                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
+        Creador creador = obtenerCreadorPorId(idCreador);
 
         return recetaRepository.countByCreador(creador);
     }
@@ -52,15 +42,14 @@ public class CreadorServiceImpl implements ICreadorService {
     public CreadorDTO verPerfil() {
         Long idCreador = obtenerIdCreadorAutenticado();
 
-        Creador creador = creadorRepository.findById(idCreador)
-                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + idCreador));
-
-        return new CreadorDTO(creador.getNombre(),
-                creador.getApellidoPaterno(),
-                creador.getApellidoMaterno(),
-                creador.getCorreoElectronico(),
-                creador.getCodigoColegiatura(),
-                creador.getFotoPerfil());
+        return creadorRepository.findById(idCreador)
+                .map(creador -> new CreadorDTO(creador.getNombre(),
+                        creador.getApellidoPaterno(),
+                        creador.getApellidoMaterno(),
+                        creador.getCorreoElectronico(),
+                        creador.getCodigoColegiatura(),
+                        creador.getFotoPerfil()))
+                .orElseThrow(() -> new DatosNoDisponiblesException("No es posible mostrar los datos del perfil en este momento. Por favor, inténtalo más tarde."));
     }
 
     @Override
@@ -88,26 +77,11 @@ public class CreadorServiceImpl implements ICreadorService {
 
     @Override
     @Transactional
-    public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws IOException, FotoPerfilException {
-        if (fotoPerfil.isEmpty()) throw new IOException("El archivo de imagen está vacío");
-
-        String tipoArchivo = fotoPerfil.getContentType();
-        if (!tipoArchivo.equals("image/jpeg") && !tipoArchivo.equals("image/png") && !tipoArchivo.equals("image/jpg"))
-            throw new IOException("El archivo no es una foto válida");
-
-        String nombreArchivo = UUID.randomUUID().toString() + "_" + fotoPerfil.getOriginalFilename();
-        Path rutaCompleta = Paths.get(RUTA_IMAGENES + nombreArchivo);
-
-        try {
-            Files.createDirectory(rutaCompleta.getParent());
-            Files.write(rutaCompleta, fotoPerfil.getBytes());
-        } catch (IOException e) {
-            throw new FotoPerfilException("Error al guardar la foto", e);
-        }
+    public MessageResponse actualizarFotoPerfil(MultipartFile fotoPerfil) throws FotoPerfilException, IOException, ExecutionException, InterruptedException {
+        String nombreArchivo = uploadImage.guardarImagen(fotoPerfil);
 
         Long idCreador = obtenerIdCreadorAutenticado();
-        Creador creador = creadorRepository.findById(idCreador)
-                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado"));
+        Creador creador = obtenerCreadorPorId(idCreador);
 
         creador.setFotoPerfil(nombreArchivo);
         creadorRepository.save(creador); // Guarda el cambio en la base de datos
@@ -115,11 +89,47 @@ public class CreadorServiceImpl implements ICreadorService {
         return new MessageResponse("Foto actualizada correctamente.");
     }
 
-    private Long obtenerIdCreadorAutenticado() {
+    @Override
+    @Transactional
+    public void eliminarCreadorPorEmail(String correoElectronico) {
+        Creador creador = obtenerCreadorPorEmail(correoElectronico);
+        creadorRepository.delete(creador);
+    }
+
+    @Override
+    public Creador obtenerCreadorPorTokenConfirmacion(String tokenTemporal) {
+        Optional<Creador> optionalCreador = creadorRepository.findCreadorByTokenConfirmacion(tokenTemporal);
+
+        if (!optionalCreador.isPresent()) {
+            verificarSiCorreoYaConfirmado(tokenTemporal);
+        }
+
+        return optionalCreador.get();
+    }
+
+    @Override
+    public Long obtenerIdCreadorAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         validarAutenticacion(authentication);
         String email = authentication.getName();
         return obtenerCreadorPorEmail(email).getIdCreador();
+    }
+
+    @Override
+    public Creador obtenerCreadorPorId(Long id) {
+        return creadorRepository.findById(id)
+                .orElseThrow(() -> new CreadorNoEncontradoException("Creador no encontrado con ID: " + id));
+    }
+
+    private void verificarSiCorreoYaConfirmado(String tokenTemporal) {
+        Optional<Creador> creadorConCorreoConfirmado = creadorRepository.findCreadorByCorreoElectronico(tokenTemporal)
+                .filter(Creador::isEnabled);
+
+        if (creadorConCorreoConfirmado.isPresent()) {
+            throw new CorreoConfirmadoException("Esta cuenta ya ha sido confirmada.");
+        }
+
+        throw new CreadorNoEncontradoException("Usuario con token: " + tokenTemporal + " no encontrado.");
     }
 
     private void validarAutenticacion(Authentication authentication) {

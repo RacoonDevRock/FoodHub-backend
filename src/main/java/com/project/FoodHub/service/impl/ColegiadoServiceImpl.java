@@ -1,5 +1,6 @@
 package com.project.FoodHub.service.impl;
 
+import com.project.FoodHub.entity.Colegiado;
 import com.project.FoodHub.exception.ColegiadoNoEncontradoException;
 import com.project.FoodHub.repository.ColegiadoRepository;
 import com.project.FoodHub.service.IColegiadoService;
@@ -33,6 +34,15 @@ public class ColegiadoServiceImpl implements IColegiadoService {
         } else {
             throw new ColegiadoNoEncontradoException("Colegiado no encontrado con código: " + codigoColegiado);
         }
+    }
+
+    @Override
+    @Transactional
+    public void actualizarCuentaConfirmada(String codigoColegiatura) {
+        Colegiado colegiado = colegiadoRepository.findByCodigoColegiado(codigoColegiatura)
+                .orElseThrow(() -> new ColegiadoNoEncontradoException("Colegiado no encontrado con codigo: " + codigoColegiatura));
+        colegiado.setCuentaConfirmada(false);
+        colegiadoRepository.save(colegiado);
     }
 
 }

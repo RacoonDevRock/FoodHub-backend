@@ -2,10 +2,11 @@ package com.project.FoodHub.controller;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.project.FoodHub.config.service.IUserDetailService;
+import com.project.FoodHub.config.security.service.IUserDetailService;
 import com.project.FoodHub.dto.*;
 import com.project.FoodHub.exception.CreadorNoEncontradoException;
 import com.project.FoodHub.exception.IncorrectCredentials;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -13,6 +14,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/auth")
@@ -41,8 +44,42 @@ public class AutenticacionController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> iniciarSesion(@Valid @RequestBody AuthRequest authRequest) throws IncorrectCredentials {
-        return ResponseEntity.ok(userDetailService.iniciarSesion(authRequest));
+    public ResponseEntity<AuthResponse> iniciarSesion(@Valid @RequestBody AuthRequest authRequest, HttpServletResponse response) throws IncorrectCredentials {
+        AuthResponse authResponse = userDetailService.iniciarSesion(authRequest);
+
+        Cookie jwtCookie = new Cookie("JWT-TOKEN", authResponse.getToken());
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true); //en produccion (HTTPS)
+        jwtCookie.setMaxAge(1800); // 30 min en seg
+        jwtCookie.setPath("/");
+        response.addCookie(jwtCookie); // agrega cookie
+
+        String sameSiteCookie = String.format("%s=%s; Max-Age=%d; Path=%s; HttpOnly; Secure; SameSite=None",
+                jwtCookie.getName(), jwtCookie.getValue(), jwtCookie.getMaxAge(), jwtCookie.getPath());
+
+        response.setHeader("Set-Cookie", sameSiteCookie);
+
+        return ResponseEntity.ok(authResponse);
+    }
+
+    @GetMapping("/verify-auth")
+    public ResponseEntity<Boolean> verificarAutenticacion(HttpServletRequest request) {
+        try {
+            // Buscar la cookie JWT-TOKEN
+            String token = Arrays.stream(request.getCookies())
+                    .filter(c -> c.getName().equals("JWT-TOKEN"))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .orElse(null);
+
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+            }
+            return ResponseEntity.ok(true);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
     }
 
 }
