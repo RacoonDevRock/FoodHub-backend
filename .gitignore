@@ -38,3 +38,5 @@ build/
 ### .ENV ###
 .env
 
+### Files ###
+credentials.json

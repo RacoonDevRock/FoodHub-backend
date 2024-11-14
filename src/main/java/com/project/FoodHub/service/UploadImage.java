@@ -28,8 +28,6 @@ import java.util.*;
 @Slf4j
 public class UploadImage {
 
-    private static final String CREDENTIAL_PATH = "./credentials.json";
-
     @Value("${google.drive.folder.id}")
     private String folderId;
 
@@ -38,13 +36,13 @@ public class UploadImage {
 
     private UploadImage() throws GeneralSecurityException, IOException {
         this.driveService = createDriveService();
-        log.info(CREDENTIAL_PATH);
+        log.info(System.getenv("GOOGLE_APPLICATION_CREDENTIALS"));
         log.info(folderId);
     }
 
     private Drive createDriveService() throws GeneralSecurityException, IOException {
 
-        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(CREDENTIAL_PATH)).createScoped(Collections.singleton(DriveScopes.DRIVE_FILE));
+        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(System.getenv("GOOGLE_APPLICATION_CREDENTIALS"))).createScoped(Collections.singleton(DriveScopes.DRIVE_FILE));
 
         return new Drive.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
